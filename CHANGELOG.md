@@ -1,5 +1,18 @@
 # Änderungsprotokoll
 
+## 0.6.0 – 2026-10-03
+
+### Neu
+- Modul „Dokumente & Notfall“ – Meilenstein M2 abgeschlossen
+  - Dokumente mit Art, Person, Nummer (in der Übersicht teilweise verborgen), Gültigkeit, Status Fehlt/Beantragt/Vorhanden, Kopie abgelegt, eingepackt
+  - Gültigkeitsprüfung: abgelaufen, endet vor Reiseende, Reisepass mit weniger als 6 Monaten Puffer
+  - Dringender Hinweis, wenn Ausweis, Pass oder Visum innerhalb von 8 Wochen vor der Reise noch fehlen oder ungültig sind
+  - Vorschläge passend zur Anreiseart (z. B. Führerschein und Fahrzeugschein beim Auto)
+  - Notfallnummern: 112 (EU) und Sperr-Notruf immer sichtbar, eigene Nummern mit Anruf-Knopf
+
+### Geändert
+- Datenbank-Version 6 (neue Tabellen `documents`, `emergencyContacts`), Backup enthält sie
+
 ## 0.5.0 – 2026-10-03
 
 ### Neu
