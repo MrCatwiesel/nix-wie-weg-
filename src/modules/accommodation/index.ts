@@ -1,0 +1,33 @@
+import type { AppModule } from '@/core/registry'
+import { tripRepository } from '@/modules/trip/public'
+import { accommodationRepository } from './repository'
+import { coverage, totalCost } from './logic'
+
+/** Modul "Unterkünfte" (Meilenstein M1). */
+export const accommodationModule: AppModule = {
+  id: 'accommodation',
+  title: 'Unterkünfte',
+  icon: 'house-door',
+  order: 20,
+  routes: [
+    { path: '/trip/:tripId/unterkuenfte', name: 'accommodation-list', component: () => import('./views/AccommodationList.vue'), props: true },
+    { path: '/trip/:tripId/unterkuenfte/neu', name: 'accommodation-new', component: () => import('./views/AccommodationEdit.vue'), props: true },
+    { path: '/trip/:tripId/unterkuenfte/:id', name: 'accommodation-edit', component: () => import('./views/AccommodationEdit.vue'), props: true }
+  ],
+  tripSection: {
+    title: 'Unterkünfte',
+    icon: 'house-door',
+    to: (tripId) => `/trip/${tripId}/unterkuenfte`,
+    async summary(tripId) {
+      const [trip, list] = await Promise.all([tripRepository.get(tripId), accommodationRepository.listByTrip(tripId)])
+      if (!trip || list.length === 0) return 'Noch keine Unterkunft'
+      const c = coverage(trip.startDate, trip.endDate, list)
+      return c.totalNights === 0 ? `${list.length} erfasst` : `${c.bookedNights} von ${c.totalNights} Nächten gebucht`
+    },
+    async plannedCost(tripId) {
+      const [trip, list] = await Promise.all([tripRepository.get(tripId), accommodationRepository.listByTrip(tripId)])
+      return trip ? totalCost(list, trip.currency) : 0
+    }
+  },
+  onTripDelete: (tripId) => accommodationRepository.removeByTrip(tripId)
+}

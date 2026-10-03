@@ -1,4 +1,5 @@
 import { db, newId, now } from '@/core/db'
+import { notifyTripDeleted } from '@/core/registry'
 import type { Trip, TripDraft } from './types'
 
 /** Datenzugriff des Moduls – Views greifen nie direkt auf die Datenbank zu. */
@@ -22,7 +23,9 @@ export const tripRepository = {
     await db.trips.update(id, { ...draft, updatedAt: now() })
   },
 
+  /** Löscht die Reise und lässt alle Module ihre zugehörigen Daten entfernen. */
   async remove(id: string): Promise<void> {
+    await notifyTripDeleted(id)
     await db.trips.delete(id)
   }
 }

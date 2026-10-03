@@ -45,7 +45,19 @@ export const packingModule: AppModule = {
 }
 ```
 
-Module, die zu einer Reise gehören, brauchen meist kein `navTo` – sie werden von der Reise-Detailseite aus verlinkt.
+Module, die zu einer Reise gehören, brauchen kein `navTo`. Stattdessen erscheinen sie über `tripSection` auf der Reise-Detailseite, und `onTripDelete` räumt ihre Daten auf, wenn die Reise gelöscht wird:
+
+```ts
+  tripSection: {
+    title: 'Packliste',
+    icon: 'backpack',
+    to: (tripId) => `/trip/${tripId}/packliste`,
+    summary: async (tripId) => `${await countOpen(tripId)} Sachen offen`
+  },
+  onTripDelete: (tripId) => packingRepository.removeByTrip(tripId)
+```
+
+Vollständige Beispiele: `src/modules/accommodation/index.ts` und `src/modules/activity/index.ts`. Für die Kopfzeile von Unterseiten `TripContextHeader` aus `@/modules/trip/public` verwenden.
 
 ## 4. Registrieren
 

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLiveQuery } from '@/core/composables'
+import { getTripSections } from '@/core/registry'
 import { tripRepository } from '../repository'
 import { budgetPerPersonDay, daysUntil, formatDate, formatMoney, tripDays } from '../logic'
 import { TRANSPORT_LABELS, type Trip } from '../types'
@@ -27,10 +28,31 @@ const facts = computed(() => {
   ]
 })
 
+/** Abschnitte, die andere Module beisteuern (Unterkünfte, Unternehmungen …). */
+const sections = getTripSections()
+
+/** Zusammenfassungen und geplante Kosten aller Abschnitte – aktualisieren sich live. */
+const sectionData = useLiveQuery(
+  () =>
+    Promise.all(
+      sections.map(async (s) => ({
+        summary: s.summary ? await s.summary(props.id) : '',
+        cost: s.plannedCost ? await s.plannedCost(props.id) : 0
+      }))
+    ),
+  [] as { summary: string; cost: number }[]
+)
+
+const budgetCheck = computed(() => {
+  const t = trip.value
+  const planned = sectionData.value.reduce((sum, d) => sum + d.cost, 0)
+  if (!t || planned === 0) return null
+  const pct = t.budget ? Math.round((planned / t.budget) * 100) : null
+  return { planned, pct, over: t.budget !== null && planned > t.budget }
+})
+
 /** Platzhalter für die kommenden Module – zeigt die Roadmap direkt in der App. */
 const upcoming = [
-  { icon: 'house-door', title: 'Unterkünfte', milestone: 'M1' },
-  { icon: 'star', title: 'Unternehmungen', milestone: 'M1' },
   { icon: 'backpack', title: 'Packliste', milestone: 'M2' },
   { icon: 'capsule', title: 'Medikamente', milestone: 'M2' },
   { icon: 'cloud-sun', title: 'Tagesplaner', milestone: 'M3' },
@@ -76,6 +98,42 @@ async function remove() {
         </div>
       </li>
     </ul>
+
+    <!-- Planungsbereiche der Module -->
+    <h2 class="h6 text-body-secondary">Planung</h2>
+    <div class="list-group mb-3">
+      <RouterLink v-for="(s, i) in sections" :key="s.moduleId" :to="s.to(trip.id)"
+                  class="list-group-item list-group-item-action d-flex align-items-center gap-3">
+        <i :class="`bi bi-${s.icon} fs-5 text-primary`" aria-hidden="true"></i>
+        <div class="flex-grow-1">
+          <div class="fw-semibold">{{ s.title }}</div>
+          <div class="small text-body-secondary">{{ sectionData[i]?.summary ?? '…' }}</div>
+        </div>
+        <span v-if="sectionData[i]?.cost" class="small text-body-secondary">
+          {{ formatMoney(sectionData[i].cost, trip.currency) }}
+        </span>
+        <i class="bi bi-chevron-right text-body-secondary" aria-hidden="true"></i>
+      </RouterLink>
+    </div>
+
+    <!-- Budgetvergleich -->
+    <div v-if="budgetCheck" class="card mb-4">
+      <div class="card-body py-2">
+        <div class="d-flex justify-content-between small mb-1">
+          <span>Geplante Kosten</span>
+          <strong :class="{ 'text-danger': budgetCheck.over }">
+            {{ formatMoney(budgetCheck.planned, trip.currency) }}
+            <template v-if="trip.budget"> von {{ formatMoney(trip.budget, trip.currency) }}</template>
+          </strong>
+        </div>
+        <div v-if="budgetCheck.pct !== null" class="progress" style="height: 8px" role="progressbar"
+             :aria-valuenow="budgetCheck.pct" aria-valuemin="0" aria-valuemax="100" aria-label="Budget verplant">
+          <div class="progress-bar" :class="budgetCheck.over ? 'bg-danger' : budgetCheck.pct > 85 ? 'bg-warning' : 'bg-success'"
+               :style="{ width: `${Math.min(100, budgetCheck.pct)}%` }"></div>
+        </div>
+        <div class="small text-body-secondary mt-1">Unterkünfte und Unternehmungen in {{ trip.currency }}, ohne Anreise und Verpflegung.</div>
+      </div>
+    </div>
 
     <div v-if="trip.notes" class="mb-4">
       <h2 class="h6 text-body-secondary">Notizen</h2>

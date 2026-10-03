@@ -1,5 +1,17 @@
 # Änderungsprotokoll
 
+## 0.2.0 – 2026-10-03
+
+### Neu
+- Modul „Unterkünfte“: Hotels, Ferienwohnungen, Camping erfassen; Status Idee/Angefragt/Gebucht/Storniert; Preis pro Nacht; Abdeckung der Reisenächte mit Lücken und Doppelbuchungen; Warnung vor ablaufenden kostenlosen Stornofristen
+- Modul „Unternehmungen“: Ideen sammeln mit Kategorie, Drinnen/Draußen, Priorität, Dauer, Preis pro Person, Öffnungszeiten; Filter; Status inkl. „erledigt“ per Klick; Warnung bei über 8 Stunden Programm pro Tag
+- Reise-Detailseite zeigt die Planungsbereiche der Module mit Zusammenfassung und vergleicht geplante Kosten mit dem Budget
+- Kern: Module können Abschnitte auf der Reise-Seite beisteuern (`tripSection`) und beim Löschen einer Reise ihre Daten aufräumen (`onTripDelete`)
+- Gemeinsame Hilfen `core/dates.ts` und `core/format.ts`
+
+### Geändert
+- Datenbank-Version 2 (neue Tabellen `accommodations`, `activities`), Backup enthält beide
+
 ## 0.1.0 – 2026-10-03
 
 ### Neu

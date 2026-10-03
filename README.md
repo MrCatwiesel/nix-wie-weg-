@@ -2,7 +2,7 @@
 
 Reise-App von der Planung bis zur Reise-Webseite – offline zuerst, als installierbare Web-App (PWA) für Handy, Tablet und PC.
 
-**Stand 0.1.0:** Kern (lokale Datenbank, Modul-System, Backup) und erstes Modul **Reiseprojekt** (Reisen anlegen, bearbeiten, Budget pro Person und Tag).
+**Stand 0.2.0:** Kern (lokale Datenbank, Modul-System, Backup) und die Planungsmodule **Reiseprojekt**, **Unterkünfte** und **Unternehmungen** inklusive Budgetvergleich.
 
 ## Starten
 
@@ -35,7 +35,9 @@ src/
   ui/              gemeinsames Theme und (später) gemeinsame Komponenten
   modules/
     index.ts       Liste der aktiven Module
-    trip/          Modul "Reiseprojekt"
+    trip/          Modul "Reiseprojekt" (public.ts = Schnittstelle für andere Module)
+    accommodation/ Modul "Unterkünfte"
+    activity/      Modul "Unternehmungen"
   services/        (später) Wetter, Karten, Öffnungszeiten, Routen
 docs/
   ARCHITEKTUR.md   Regeln und Aufbau
@@ -53,7 +55,7 @@ docs/
 | Meilenstein | Inhalt | Status |
 | --- | --- | --- |
 | M0 Fundament | Gerüst, Kern, Datenbank, PWA, Theme | erledigt |
-| M1 Planung | Reiseprojekt ✔, Anreise, Unterkünfte, Unternehmungen, Budget | in Arbeit |
+| M1 Planung | Reiseprojekt ✔, Unterkünfte ✔, Unternehmungen ✔, Budgetvergleich ✔, Anreise | fast fertig |
 | M2 Vorbereitung | Packlisten mit Vorlagen, Medikamente, Dokumente | offen |
 | M3 Unterwegs | Tagesplaner mit Wetter, Öffnungszeiten, Karte offline | offen |
 | M4 Tagebuch | Tageseinträge, Fotos, Orte, Ausgaben | offen |

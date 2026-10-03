@@ -6,7 +6,9 @@
 2. **Module kennen einander nicht.** Jedes Modul meldet sich über `core/registry.ts` an und nutzt nur den Kern. Verknüpfung läuft über IDs (z. B. `tripId`).
 3. **Daten nur über Repositories.** Views greifen nie direkt auf `db` zu, sondern auf `<modul>/repository.ts`.
 4. **Logik ohne Oberfläche.** Berechnungen und Prüfungen stehen in `<modul>/logic.ts` als reine Funktionen und haben Tests.
-5. **Bootstrap nicht verändern.** Anpassungen nur über CSS-Variablen in `src/ui/theme.css`.
+5. **Das Reiseprojekt ist die gemeinsame Basis.** Andere Module dürfen nur `modules/trip/public.ts` importieren (Reise lesen, Kopfzeile `TripContextHeader`) – nie andere Dateien aus `trip/` und nie andere Module.
+6. **Andocken an die Reise-Seite** über `tripSection` (Titel, Link, Zusammenfassung, geplante Kosten) und Aufräumen über `onTripDelete` in der Modul-Definition.
+7. **Bootstrap nicht verändern.** Anpassungen nur über CSS-Variablen in `src/ui/theme.css`.
 
 ## Schichten
 
@@ -39,3 +41,4 @@ Der Generator erzeugt eine **statische** Webseite (HTML + CSS + Bilder) aus ausg
 | 2026-10-03 | PWA statt nativer App | eine Codebasis, offline-fähig, später per Capacitor in die Stores |
 | 2026-10-03 | Vue 3 + Bootstrap 5.3 | leicht lesbar, Bootstrap auch für Webseiten-Templates |
 | 2026-10-03 | Dexie/IndexedDB | große Datenmengen (Fotos) lokal, Live-Abfragen |
+| 2026-10-03 | Reise-Seite über `tripSection` erweiterbar | Reise-Modul muss neue Module nicht kennen |

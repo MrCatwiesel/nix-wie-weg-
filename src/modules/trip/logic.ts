@@ -1,4 +1,8 @@
 import type { TripDraft } from './types'
+import { DAY_MS, toUtcDay } from '../../core/dates'
+
+// Formatierung liegt im Kern; hier weitergereicht, damit bestehende Imports funktionieren.
+export { formatDate, formatMoney } from '../../core/format'
 
 /** Leerer Entwurf für das Formular "Neue Reise". */
 export function emptyTripDraft(): TripDraft {
@@ -13,14 +17,6 @@ export function emptyTripDraft(): TripDraft {
     transport: 'auto',
     notes: ''
   }
-}
-
-const DAY_MS = 24 * 60 * 60 * 1000
-
-/** Datum YYYY-MM-DD als UTC-Mitternacht, damit Zeitzonen nicht stören. */
-function toUtcDay(isoDate: string): number {
-  const [y, m, d] = isoDate.split('-').map(Number)
-  return Date.UTC(y, m - 1, d)
 }
 
 /** Anzahl Reisetage inkl. An- und Abreisetag. */
@@ -63,13 +59,4 @@ export function validateTrip(draft: TripDraft): Partial<Record<keyof TripDraft, 
   }
   if (draft.budget !== null && draft.budget < 0) errors.budget = 'Budget darf nicht negativ sein.'
   return errors
-}
-
-export function formatMoney(value: number, currency: string): string {
-  return new Intl.NumberFormat('de-DE', { style: 'currency', currency }).format(value)
-}
-
-export function formatDate(isoDate: string): string {
-  return new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
-    .format(new Date(toUtcDay(isoDate)))
 }
