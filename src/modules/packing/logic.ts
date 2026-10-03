@@ -27,48 +27,81 @@ export function normName(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, ' ')
 }
 
+/** Ob ein Vorlagen-Eintrag pro Person angelegt wird. */
+export function isPersonal(t: TemplateItem): boolean {
+  if (t.personal) return true
+  return typeof t.qty === 'object' && t.qty !== null
+}
+
 /**
  * Erzeugt Entwürfe aus mehreren Vorlagen.
- * Gleiche Dinge werden zusammengefasst (größte Menge, "wichtig" wenn irgendwo wichtig),
- * und Dinge, die schon auf der Liste stehen, werden übersprungen.
+ *  - Mit Teilnehmern: persönliche Dinge je Teilnehmer (Menge für eine Person),
+ *    gemeinsame Dinge einmal.
+ *  - Ohne Teilnehmer: jeder Eintrag einmal, "pro Person" wird mit der Personenzahl multipliziert.
+ * Gleiche Dinge werden zusammengefasst (größte Menge, "wichtig" gewinnt);
+ * was schon auf der Liste steht (gleicher Name für dieselbe Person oder gemeinsam), wird übersprungen.
  */
 export function draftsFromTemplates(
   templates: PackingTemplate[],
   days: number,
   travelers: number,
-  existing: Pick<PackingItem, 'name'>[] = []
+  existing: Pick<PackingItem, 'name' | 'person'>[] = [],
+  participants: string[] = []
 ): PackingDraft[] {
-  const have = new Set(existing.map((e) => normName(e.name)))
+  const key = (name: string, person: string) => `${normName(name)}|${person.trim().toLowerCase()}`
+  const have = new Set(existing.map((e) => key(e.name, e.person ?? '')))
   const merged = new Map<string, PackingDraft>()
-  const add = (t: TemplateItem) => {
-    const key = normName(t.name)
-    if (have.has(key)) return
-    const qty = resolveQuantity(t.qty, days, travelers)
-    const prev = merged.get(key)
+
+  const put = (t: TemplateItem, person: string, qty: number) => {
+    const k = key(t.name, person)
+    if (have.has(k) || have.has(key(t.name, ''))) return
+    const prev = merged.get(k)
     if (prev) {
       prev.quantity = Math.max(prev.quantity, qty)
       prev.essential = prev.essential || !!t.essential
     } else {
-      merged.set(key, emptyPackingDraft({ name: t.name, category: t.category, quantity: qty, essential: !!t.essential }))
+      merged.set(k, emptyPackingDraft({ name: t.name, category: t.category, quantity: qty, essential: !!t.essential, person }))
     }
   }
-  for (const tpl of templates) tpl.items.forEach(add)
+
+  for (const tpl of templates) {
+    for (const t of tpl.items) {
+      if (participants.length && isPersonal(t)) {
+        for (const p of participants) put(t, p, resolveQuantity(t.qty, days, 1))
+      } else {
+        put(t, '', resolveQuantity(t.qty, days, travelers))
+      }
+    }
+  }
   return [...merged.values()]
 }
 
-/** Übernimmt Einträge einer anderen Reise: ausgepackt, ohne Doppelte. */
-export function draftsFromOtherTrip(source: PackingItem[], existing: Pick<PackingItem, 'name'>[] = []): PackingDraft[] {
-  const have = new Set(existing.map((e) => normName(e.name)))
+/**
+ * Übernimmt Einträge einer anderen Reise: ausgepackt, ohne Doppelte.
+ * Personen werden übernommen, wenn es sie auf dieser Reise gibt – sonst wird der Eintrag gemeinsam.
+ */
+export function draftsFromOtherTrip(
+  source: PackingItem[],
+  existing: Pick<PackingItem, 'name' | 'person'>[] = [],
+  participants: string[] = []
+): PackingDraft[] {
+  const key = (name: string, person: string) => `${normName(name)}|${person.trim().toLowerCase()}`
+  const have = new Set(existing.map((e) => key(e.name, e.person ?? '')))
+  const known = new Map(participants.map((p) => [p.toLowerCase(), p]))
   const out: PackingDraft[] = []
   for (const s of source) {
-    const key = normName(s.name)
-    if (have.has(key)) continue
-    have.add(key)
+    const person = known.get(s.person.trim().toLowerCase()) ?? ''
+    const k = key(s.name, person)
+    if (have.has(k) || have.has(key(s.name, ''))) continue
+    have.add(k)
     const { id: _i, tripId: _t, createdAt: _c, updatedAt: _u, ...rest } = s
-    out.push({ ...rest, packed: false })
+    out.push({ ...rest, person, packed: false })
   }
   return out
 }
+
+/** Filterwert für "nur gemeinsame Dinge". */
+export const SHARED = '__gemeinsam__'
 
 export interface PackingProgress {
   total: number
@@ -89,10 +122,21 @@ export function progress(list: PackingItem[]): PackingProgress {
   }
 }
 
+/** Fortschritt je Person (nur eigene Dinge) und für Gemeinsames. */
+export function progressByPerson(list: PackingItem[], people: string[]): { person: string; progress: PackingProgress }[] {
+  const names = [...new Set([...people, ...persons(list)])]
+  return [
+    ...names.map((p) => ({ person: p, progress: progress(list.filter((i) => i.person === p)) })),
+    { person: SHARED, progress: progress(list.filter((i) => !i.person)) }
+  ]
+}
+
 export interface PackingFilter {
   openOnly?: boolean
-  /** '' = alle; sonst nur Einträge dieser Person plus gemeinsame */
+  /** '' = alle; SHARED = nur Gemeinsames; sonst nur Einträge dieser Person (optional plus Gemeinsames) */
   person?: string
+  /** Bei Personenfilter auch gemeinsame Dinge zeigen (Standard: ja) */
+  includeShared?: boolean
   search?: string
 }
 
@@ -107,7 +151,12 @@ export function groupByCategory(list: PackingItem[], f: PackingFilter = {}): Cat
   const q = f.search ? normName(f.search) : ''
   const filtered = list
     .filter((i) => !f.openOnly || !i.packed)
-    .filter((i) => !f.person || !i.person || i.person === f.person)
+    .filter((i) => {
+      if (!f.person) return true
+      if (f.person === SHARED) return !i.person
+      if (!i.person) return f.includeShared !== false
+      return i.person === f.person
+    })
     .filter((i) => !q || normName(i.name).includes(q))
   const groups = new Map<PackingCategory, PackingItem[]>()
   for (const i of filtered) {

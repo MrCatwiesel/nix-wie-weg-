@@ -18,7 +18,7 @@ const facts = computed(() => {
   const perDay = budgetPerPersonDay(t)
   return [
     { icon: 'calendar-range', label: 'Zeitraum', value: `${formatDate(t.startDate)} – ${formatDate(t.endDate)} (${tripDays(t.startDate, t.endDate)} Tage)` },
-    { icon: 'people', label: 'Personen', value: String(t.travelers) },
+    { icon: 'people', label: 'Personen', value: t.participants?.length ? t.participants.join(', ') : String(t.travelers) },
     { icon: 'signpost-split', label: 'Anreise', value: TRANSPORT_LABELS[t.transport] },
     {
       icon: 'wallet2',

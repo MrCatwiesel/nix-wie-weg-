@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  SHARED, isPersonal, progressByPerson,
   draftsFromOtherTrip, draftsFromTemplates, emptyPackingDraft, groupByCategory, parseQuickAdd, persons, progress,
   resolveQuantity, validatePacking
 } from '../logic'
@@ -43,7 +44,7 @@ describe('draftsFromTemplates', () => {
     expect(sc.essential).toBe(true)
   })
   it('überspringt Vorhandenes', () => {
-    const d = draftsFromTemplates([a, b], 5, 2, [{ name: 'ZELT' }])
+    const d = draftsFromTemplates([a, b], 5, 2, [{ name: 'ZELT', person: '' }])
     expect(d.map((x) => x.name)).toEqual(['Sonnencreme', 'Socken'])
   })
   it('alle eingebauten Vorlagen sind gültig und eindeutig', () => {
@@ -56,7 +57,7 @@ describe('draftsFromTemplates', () => {
 describe('draftsFromOtherTrip', () => {
   it('übernimmt ausgepackt und ohne Doppelte', () => {
     const src = [item({ name: 'Kamera', packed: true }), item({ name: 'Buch' }), item({ name: 'kamera' })]
-    const d = draftsFromOtherTrip(src, [{ name: 'Buch' }])
+    const d = draftsFromOtherTrip(src, [{ name: 'Buch', person: '' }])
     expect(d.map((x) => [x.name, x.packed])).toEqual([['Kamera', false]])
     expect('id' in d[0]).toBe(false)
   })
@@ -91,5 +92,52 @@ describe('parseQuickAdd', () => {
     expect(parseQuickAdd('3x Socken')).toEqual({ name: 'Socken', quantity: 3 })
     expect(parseQuickAdd('Badehose x2')).toEqual({ name: 'Badehose', quantity: 2 })
     expect(parseQuickAdd('Ladekabel USB-C')).toEqual({ name: 'Ladekabel USB-C', quantity: 1 })
+  })
+})
+
+describe('Teilnehmer', () => {
+  const tpl: PackingTemplate = { id: 't', title: 'T', icon: '', description: '', items: [
+    { name: 'Socken', category: 'kleidung', qty: { perDay: 1, max: 8 } },
+    { name: 'Zahnbürste', category: 'hygiene', personal: true },
+    { name: 'Duschgel', category: 'hygiene' },
+    { name: 'Strandtuch', category: 'freizeit', qty: { perPerson: 1 } }
+  ] }
+
+  it('erkennt persönliche Einträge', () => {
+    expect(tpl.items.map(isPersonal)).toEqual([true, true, false, true])
+  })
+
+  it('legt Persönliches je Teilnehmer an, Gemeinsames einmal', () => {
+    const d = draftsFromTemplates([tpl], 5, 2, [], ['Ich', 'Anna'])
+    const view = d.map((x) => `${x.person || '-'}:${x.name}:${x.quantity}`).sort()
+    expect(view).toEqual([
+      '-:Duschgel:1',
+      'Anna:Socken:5', 'Anna:Strandtuch:1', 'Anna:Zahnbürste:1',
+      'Ich:Socken:5', 'Ich:Strandtuch:1', 'Ich:Zahnbürste:1'
+    ])
+  })
+
+  it('überspringt, was eine Person schon hat, legt es für die andere an', () => {
+    const d = draftsFromTemplates([tpl], 5, 2, [{ name: 'Zahnbürste', person: 'Ich' }], ['Ich', 'Anna'])
+    expect(d.filter((x) => x.name === 'Zahnbürste').map((x) => x.person)).toEqual(['Anna'])
+  })
+
+  it('übernimmt aus anderer Reise nur bekannte Personen, sonst gemeinsam', () => {
+    const src = [item({ name: 'Kamera', person: 'anna' }), item({ name: 'Buch', person: 'Paul' })]
+    const d = draftsFromOtherTrip(src, [], ['Ich', 'Anna'])
+    expect(d.map((x) => `${x.name}:${x.person}`)).toEqual(['Kamera:Anna', 'Buch:'])
+  })
+
+  it('filtert nur Gemeinsames bzw. Person ohne Gemeinsames', () => {
+    const list = [item({ name: 'A', person: 'Ich' }), item({ name: 'B' }), item({ name: 'C', person: 'Anna' })]
+    expect(groupByCategory(list, { person: SHARED }).flatMap((g) => g.items.map((i) => i.name))).toEqual(['B'])
+    expect(groupByCategory(list, { person: 'Ich', includeShared: false }).flatMap((g) => g.items.map((i) => i.name))).toEqual(['A'])
+    expect(groupByCategory(list, { person: 'Ich' }).flatMap((g) => g.items.map((i) => i.name)).sort()).toEqual(['A', 'B'])
+  })
+
+  it('zählt Fortschritt je Person', () => {
+    const list = [item({ person: 'Ich', packed: true }), item({ person: 'Ich' }), item({ person: '' })]
+    const r = progressByPerson(list, ['Ich', 'Anna'])
+    expect(r.map((x) => `${x.person}:${x.progress.packed}/${x.progress.total}`)).toEqual(['Ich:1/2', 'Anna:0/0', `${SHARED}:0/1`])
   })
 })

@@ -13,6 +13,11 @@ export interface TemplateItem {
   category: PackingCategory
   qty?: QuantityRule
   essential?: boolean
+  /**
+   * Persönlich: jeder Teilnehmer bekommt einen eigenen Eintrag.
+   * Mengen "pro Tag" und "pro Person" gelten automatisch als persönlich.
+   */
+  personal?: boolean
 }
 
 export interface PackingTemplate {
@@ -44,18 +49,18 @@ export const TEMPLATES: PackingTemplate[] = [
       { name: 'Socken', category: 'kleidung', qty: { perDay: 1, max: 8 } },
       { name: 'T-Shirts', category: 'kleidung', qty: { perDay: 0.7, max: 6 } },
       { name: 'Hosen', category: 'kleidung', qty: { perDay: 0.3, max: 3 } },
-      { name: 'Pullover / Jacke', category: 'kleidung', qty: 1 },
-      { name: 'Schlafsachen', category: 'kleidung', qty: 1 },
-      { name: 'Bequeme Schuhe', category: 'kleidung', qty: 1 },
-      { name: 'Zahnbürste & Zahnpasta', category: 'hygiene' },
+      { name: 'Pullover / Jacke', category: 'kleidung', qty: 1, personal: true },
+      { name: 'Schlafsachen', category: 'kleidung', qty: 1, personal: true },
+      { name: 'Bequeme Schuhe', category: 'kleidung', qty: 1, personal: true },
+      { name: 'Zahnbürste & Zahnpasta', category: 'hygiene', personal: true },
       { name: 'Duschgel & Shampoo', category: 'hygiene' },
-      { name: 'Deo', category: 'hygiene' },
-      { name: 'Kamm / Bürste', category: 'hygiene' },
-      { name: 'Persönliche Medikamente', category: 'gesundheit', essential: true },
+      { name: 'Deo', category: 'hygiene', personal: true },
+      { name: 'Kamm / Bürste', category: 'hygiene', personal: true },
+      { name: 'Persönliche Medikamente', category: 'gesundheit', essential: true, personal: true },
       { name: 'Pflaster & Schmerzmittel', category: 'gesundheit' },
-      { name: 'Handy & Ladekabel', category: 'technik', essential: true },
+      { name: 'Handy & Ladekabel', category: 'technik', essential: true, personal: true },
       { name: 'Powerbank', category: 'technik' },
-      { name: 'Kopfhörer', category: 'technik' },
+      { name: 'Kopfhörer', category: 'technik', personal: true },
       { name: 'Schlüssel (Haus)', category: 'sonstiges', essential: true }
     ]
   },
@@ -65,7 +70,7 @@ export const TEMPLATES: PackingTemplate[] = [
     icon: 'sun',
     description: 'Badeurlaub, Pool, Meer',
     items: [
-      { name: 'Badesachen', category: 'kleidung', qty: 2 },
+      { name: 'Badesachen', category: 'kleidung', qty: 2, personal: true },
       { name: 'Strandtuch', category: 'freizeit', qty: { perPerson: 1 } },
       { name: 'Sonnencreme (LSF 30+)', category: 'hygiene', essential: true },
       { name: 'After-Sun', category: 'hygiene' },
@@ -87,8 +92,8 @@ export const TEMPLATES: PackingTemplate[] = [
       { name: 'Wanderschuhe', category: 'kleidung', qty: { perPerson: 1 }, essential: true },
       { name: 'Wandersocken', category: 'kleidung', qty: { perDay: 0.5, max: 4 } },
       { name: 'Regenjacke', category: 'kleidung', qty: { perPerson: 1 }, essential: true },
-      { name: 'Funktionsshirts', category: 'kleidung', qty: 3 },
-      { name: 'Fleecejacke', category: 'kleidung', qty: 1 },
+      { name: 'Funktionsshirts', category: 'kleidung', qty: 3, personal: true },
+      { name: 'Fleecejacke', category: 'kleidung', qty: 1, personal: true },
       { name: 'Tagesrucksack', category: 'freizeit', qty: { perPerson: 1 } },
       { name: 'Trinkflasche', category: 'unterwegs', qty: { perPerson: 1 } },
       { name: 'Wanderkarte / Offline-Karten', category: 'freizeit' },
@@ -105,8 +110,8 @@ export const TEMPLATES: PackingTemplate[] = [
     icon: 'buildings',
     description: 'Museen, Restaurants, viel zu Fuß',
     items: [
-      { name: 'Bequeme Schuhe', category: 'kleidung', qty: 1 },
-      { name: 'Schickes Outfit für abends', category: 'kleidung', qty: 1 },
+      { name: 'Bequeme Schuhe', category: 'kleidung', qty: 1, personal: true },
+      { name: 'Schickes Outfit für abends', category: 'kleidung', qty: 1, personal: true },
       { name: 'Kleiner Rucksack / Umhängetasche', category: 'freizeit' },
       { name: 'Regenschirm', category: 'unterwegs' },
       { name: 'Stadtplan / Offline-Karten', category: 'technik' },
@@ -122,7 +127,7 @@ export const TEMPLATES: PackingTemplate[] = [
     items: [
       { name: 'Winterjacke', category: 'kleidung', qty: { perPerson: 1 }, essential: true },
       { name: 'Skihose', category: 'kleidung', qty: { perPerson: 1 } },
-      { name: 'Thermounterwäsche', category: 'kleidung', qty: 2 },
+      { name: 'Thermounterwäsche', category: 'kleidung', qty: 2, personal: true },
       { name: 'Mütze, Schal, Handschuhe', category: 'kleidung', qty: { perPerson: 1 } },
       { name: 'Skisocken', category: 'kleidung', qty: { perDay: 0.5, max: 5 } },
       { name: 'Winterstiefel', category: 'kleidung', qty: { perPerson: 1 } },
@@ -196,7 +201,7 @@ export const TEMPLATES: PackingTemplate[] = [
       { name: 'Kofferwaage', category: 'sonstiges' },
       { name: 'Gepäckanhänger', category: 'sonstiges' },
       { name: 'Reiseadapter', category: 'technik' },
-      { name: 'Kopfhörer', category: 'technik' }
+      { name: 'Kopfhörer', category: 'technik', personal: true }
     ]
   }
 ]

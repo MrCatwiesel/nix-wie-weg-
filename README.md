@@ -2,7 +2,7 @@
 
 Reise-App von der Planung bis zur Reise-Webseite – offline zuerst, als installierbare Web-App (PWA) für Handy, Tablet und PC.
 
-**Stand 0.4.0:** Planung komplett (M1: **Reiseprojekt**, **An- und Rückreise**, **Unterkünfte**, **Unternehmungen**, Budgetvergleich) und Vorbereitung komplett (M2: **Packliste**, **Reiseapotheke**, **Dokumente & Notfall**).
+**Stand 0.7.0:** Planung komplett (M1: **Reiseprojekt**, **An- und Rückreise**, **Unterkünfte**, **Unternehmungen**, Budgetvergleich) und Vorbereitung komplett (M2: **Packliste**, **Reiseapotheke**, **Dokumente & Notfall**) – alles auch getrennt pro Teilnehmer.
 
 **App online:** https://mrcatwiesel.github.io/nix-wie-weg-/
 

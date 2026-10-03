@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useLiveQuery } from '@/core/composables'
 import { formatDate } from '@/core/format'
-import { TripContextHeader, tripRepository, type Trip } from '@/modules/trip/public'
+import { TripContextHeader, participantsOf, tripRepository, type Trip } from '@/modules/trip/public'
 import { contactRepository, documentRepository } from '../repository'
 import { VALIDITY_TEXT, maskNumber, needsRenewalSoon, sortDocs, suggestDocuments, summarizeDocs, telHref, validity } from '../logic'
 import { DOC_STATUS, DOC_TYPE, STANDARD_NUMBERS, type EmergencyContact, type TravelDocument } from '../types'
@@ -18,7 +18,7 @@ const showNumbers = ref(false)
 
 const sorted = computed(() => (trip.value ? sortDocs(docs.value, trip.value.endDate) : docs.value))
 const summary = computed(() => (trip.value ? summarizeDocs(docs.value, trip.value.endDate) : null))
-const suggestions = computed(() => (trip.value ? suggestDocuments(trip.value.transport, docs.value) : []))
+const suggestions = computed(() => (trip.value ? suggestDocuments(trip.value.transport, docs.value, participantsOf(trip.value)) : []))
 const renewals = computed(() =>
   trip.value ? docs.value.filter((d) => needsRenewalSoon(d, trip.value!.startDate, trip.value!.endDate)) : []
 )

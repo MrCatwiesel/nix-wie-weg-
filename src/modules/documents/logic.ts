@@ -103,26 +103,40 @@ export function sortDocs(list: TravelDocument[], tripEnd: string, today: Date = 
 }
 
 /**
- * Vorschläge passend zur Reise. Bereits vorhandene Titel werden übersprungen.
+ * Vorschläge passend zur Reise.
+ * Mit Teilnehmern bekommt jede Person eigene persönliche Dokumente (Ausweis, Versicherungskarte, Impfpass).
+ * Bereits vorhandene (gleicher Titel für dieselbe Person) werden übersprungen.
  * `transport` ist die Anreiseart der Reise (auto, bahn, flug, bus, sonstiges).
  */
-export function suggestDocuments(transport: string, existing: Pick<TravelDocument, 'title'>[] = []): TravelDocumentDraft[] {
-  const s: TravelDocumentDraft[] = [
+export function suggestDocuments(
+  transport: string,
+  existing: Pick<TravelDocument, 'title' | 'person'>[] = [],
+  participants: string[] = []
+): TravelDocumentDraft[] {
+  const personal: TravelDocumentDraft[] = [
     emptyDocumentDraft({ type: 'ausweis', title: 'Personalausweis oder Reisepass' }),
     emptyDocumentDraft({ type: 'versicherung', title: 'Krankenversicherungskarte' }),
-    emptyDocumentDraft({ type: 'versicherung', title: 'Auslandsreisekrankenversicherung' }),
-    emptyDocumentDraft({ type: 'buchung', title: 'Buchungsbestätigung Unterkunft' }),
     emptyDocumentDraft({ type: 'gesundheit', title: 'Impfpass' })
   ]
+  const shared: TravelDocumentDraft[] = [
+    emptyDocumentDraft({ type: 'versicherung', title: 'Auslandsreisekrankenversicherung' }),
+    emptyDocumentDraft({ type: 'buchung', title: 'Buchungsbestätigung Unterkunft' })
+  ]
   if (transport === 'auto') {
-    s.push(emptyDocumentDraft({ type: 'fuehrerschein', title: 'Führerschein' }))
-    s.push(emptyDocumentDraft({ type: 'fahrzeug', title: 'Fahrzeugschein & grüne Versicherungskarte' }))
+    shared.push(emptyDocumentDraft({ type: 'fuehrerschein', title: 'Führerschein' }))
+    shared.push(emptyDocumentDraft({ type: 'fahrzeug', title: 'Fahrzeugschein & grüne Versicherungskarte' }))
   }
-  if (transport === 'flug') s.push(emptyDocumentDraft({ type: 'ticket', title: 'Flugtickets / Bordkarten' }))
-  if (transport === 'bahn') s.push(emptyDocumentDraft({ type: 'ticket', title: 'Bahntickets' }))
-  if (transport === 'bus') s.push(emptyDocumentDraft({ type: 'ticket', title: 'Bustickets' }))
-  const have = new Set(existing.map((e) => e.title.trim().toLowerCase()))
-  return s.filter((d) => !have.has(d.title.toLowerCase()))
+  if (transport === 'flug') shared.push(emptyDocumentDraft({ type: 'ticket', title: 'Flugtickets / Bordkarten' }))
+  if (transport === 'bahn') shared.push(emptyDocumentDraft({ type: 'ticket', title: 'Bahntickets' }))
+  if (transport === 'bus') shared.push(emptyDocumentDraft({ type: 'ticket', title: 'Bustickets' }))
+
+  const all = participants.length
+    ? [...participants.flatMap((p) => personal.map((d) => ({ ...d, person: p }))), ...shared]
+    : [...personal, ...shared]
+
+  const key = (title: string, person: string) => `${title.trim().toLowerCase()}|${person.trim().toLowerCase()}`
+  const have = new Set(existing.map((e) => key(e.title, e.person ?? '')))
+  return all.filter((d) => !have.has(key(d.title, d.person)) && !have.has(key(d.title, '')))
 }
 
 /** Telefonnummer für einen tel:-Link: nur Ziffern und führendes +. */

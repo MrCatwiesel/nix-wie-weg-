@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { diffDays } from '@/core/dates'
 import { formatDate } from '@/core/format'
-import { TripContextHeader, tripRepository, type Trip } from '@/modules/trip/public'
+import { TripContextHeader, participantsOf, tripRepository, type Trip } from '@/modules/trip/public'
 import { packingRepository } from '../repository'
 import { draftsFromOtherTrip, draftsFromTemplates } from '../logic'
 import { TEMPLATES } from '../templates'
@@ -19,6 +19,9 @@ const selected = ref(new Set<string>(['basis']))
 const sourceTrip = ref('')
 const sourceItems = ref<PackingItem[]>([])
 const busy = ref(false)
+/** Für wen persönliche Dinge angelegt werden (Standard: alle Teilnehmer) */
+const forPeople = ref(new Set<string>())
+const participants = computed(() => participantsOf(trip.value))
 
 /** Reisedauer in Tagen (inkl. An- und Abreisetag) */
 const days = computed(() => {
@@ -30,11 +33,19 @@ onMounted(async () => {
   trip.value = await tripRepository.get(props.tripId)
   if (!trip.value) return router.replace('/trip')
   existing.value = await packingRepository.listByTrip(props.tripId)
+  forPeople.value = new Set(participantsOf(trip.value))
   // Passende Vorlage zur Anreiseart vorschlagen
   if (trip.value.transport === 'auto') selected.value.add('auto')
   if (trip.value.transport === 'flug') selected.value.add('flug')
   otherTrips.value = (await tripRepository.listAll()).filter((t) => t.id !== props.tripId)
 })
+
+function togglePerson(p: string) {
+  const s = new Set(forPeople.value)
+  if (s.has(p)) s.delete(p)
+  else s.add(p)
+  forPeople.value = s
+}
 
 function toggle(id: string) {
   const s = new Set(selected.value)
@@ -44,8 +55,20 @@ function toggle(id: string) {
 }
 
 const preview = computed(() =>
-  draftsFromTemplates(TEMPLATES.filter((t) => selected.value.has(t.id)), days.value, trip.value?.travelers ?? 1, existing.value)
+  draftsFromTemplates(
+    TEMPLATES.filter((t) => selected.value.has(t.id)),
+    days.value,
+    trip.value?.travelers ?? 1,
+    existing.value,
+    participants.value.filter((p) => forPeople.value.has(p))
+  )
 )
+/** Vorschau je Person: "Ich 34 · Anna 34 · Gemeinsam 20" */
+const previewByPerson = computed(() => {
+  const m = new Map<string, number>()
+  for (const d of preview.value) m.set(d.person || 'Gemeinsam', (m.get(d.person || 'Gemeinsam') ?? 0) + 1)
+  return [...m.entries()]
+})
 const previewByCategory = computed(() => {
   const m = new Map<string, number>()
   for (const d of preview.value) m.set(CATEGORY[d.category].label, (m.get(CATEGORY[d.category].label) ?? 0) + 1)
@@ -62,7 +85,7 @@ async function addTemplates() {
 async function loadSource() {
   sourceItems.value = sourceTrip.value ? await packingRepository.listByTrip(sourceTrip.value) : []
 }
-const fromOther = computed(() => draftsFromOtherTrip(sourceItems.value, existing.value))
+const fromOther = computed(() => draftsFromOtherTrip(sourceItems.value, existing.value, participants.value))
 
 async function addFromOther() {
   if (!fromOther.value.length) return
@@ -81,6 +104,20 @@ async function addFromOther() {
       Mengen für {{ days }} {{ days === 1 ? 'Tag' : 'Tage' }} und {{ trip?.travelers ?? 1 }}
       {{ (trip?.travelers ?? 1) === 1 ? 'Person' : 'Personen' }}. Doppeltes wird zusammengefasst, Vorhandenes übersprungen.
     </p>
+    <div v-if="participants.length" class="mb-3">
+      <div class="small fw-semibold mb-1">Persönliches anlegen für:</div>
+      <div class="d-flex flex-wrap gap-2">
+        <template v-for="p in participants" :key="p">
+          <input :id="`fp-${p}`" type="checkbox" class="btn-check" :checked="forPeople.has(p)" @change="togglePerson(p)" />
+          <label class="btn btn-sm btn-outline-secondary" :for="`fp-${p}`"><i class="bi bi-person me-1" aria-hidden="true"></i>{{ p }}</label>
+        </template>
+      </div>
+      <div class="form-text">Kleidung, Zahnbürste, Ladekabel usw. bekommt jede gewählte Person einzeln, Gemeinsames kommt einmal auf die Liste.</div>
+    </div>
+    <div v-else class="alert alert-light border small py-2">
+      <i class="bi bi-lightbulb me-1" aria-hidden="true"></i>Tipp: Trag bei der Reise unter „Wer reist mit?“ Namen ein – dann wird Persönliches pro Person getrennt.
+    </div>
+
     <div class="row g-2 mb-3">
       <div v-for="t in TEMPLATES" :key="t.id" class="col-6 col-md-4">
         <input :id="`tpl-${t.id}`" type="checkbox" class="btn-check" :checked="selected.has(t.id)" @change="toggle(t.id)" />
@@ -94,6 +131,9 @@ async function addFromOther() {
     <div v-if="preview.length" class="small text-body-secondary mb-2">
       {{ preview.length }} neue Einträge:
       <span v-for="([label, n], idx) in previewByCategory" :key="label">{{ idx ? ', ' : '' }}{{ n }} {{ label }}</span>
+      <div v-if="participants.length">
+        <span v-for="([who, n], idx) in previewByPerson" :key="who">{{ idx ? ' · ' : '' }}{{ who }}: {{ n }}</span>
+      </div>
     </div>
     <div v-else class="small text-body-secondary mb-2">Keine neuen Einträge – alles schon auf der Liste.</div>
     <button type="button" class="btn btn-primary" :disabled="busy || !preview.length" @click="addTemplates">

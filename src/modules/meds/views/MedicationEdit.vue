@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { diffDays } from '@/core/dates'
-import { TripContextHeader, tripRepository, type Trip } from '@/modules/trip/public'
+import { PersonSelect, TripContextHeader, tripRepository, type Trip } from '@/modules/trip/public'
 import { medicationRepository } from '../repository'
 import { DEFAULT_RESERVE_DAYS, emptyMedicationDraft, normalizeTimes, stockStatus, unitsNeeded, validateMedication } from '../logic'
 import { KIND, type MedicationDraft } from '../types'
@@ -76,7 +76,7 @@ async function remove() {
     </div>
     <div class="col-12 col-md-4">
       <label for="person" class="form-label">Für wen?</label>
-      <input id="person" v-model="draft.person" class="form-control" placeholder="leer = für alle" />
+      <PersonSelect v-model="draft.person" :trip-id="tripId" input-id="person" />
     </div>
 
     <div class="col-12">

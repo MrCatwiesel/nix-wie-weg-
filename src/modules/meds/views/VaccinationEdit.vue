@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { TripContextHeader } from '@/modules/trip/public'
+import { PersonSelect, TripContextHeader } from '@/modules/trip/public'
 import { vaccinationRepository } from '../repository'
 import { emptyVaccinationDraft, validateVaccination } from '../logic'
 import { VACC_STATUS, type VaccinationDraft } from '../types'
@@ -51,7 +51,7 @@ async function remove() {
     </div>
     <div class="col-12 col-md-4">
       <label for="person" class="form-label">Für wen?</label>
-      <input id="person" v-model="draft.person" class="form-control" placeholder="leer = für alle" />
+      <PersonSelect v-model="draft.person" :trip-id="tripId" input-id="person" />
     </div>
     <div class="col-12">
       <label class="form-label d-block">Status</label>

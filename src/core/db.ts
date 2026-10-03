@@ -63,7 +63,19 @@ export class NixDb extends Dexie {
       emergencyContacts: 'id, tripId'
     })
 
-    // Nächste Änderung: this.version(7).stores({ … })
+    // v7: Teilnehmer pro Reise (kein neuer Index, nur Datenmigration)
+    this.version(7)
+      .stores({})
+      .upgrade((tx) =>
+        tx
+          .table('trips')
+          .toCollection()
+          .modify((t: { participants?: string[] }) => {
+            if (!Array.isArray(t.participants)) t.participants = []
+          })
+      )
+
+    // Nächste Änderung: this.version(8).stores({ … })
   }
 }
 

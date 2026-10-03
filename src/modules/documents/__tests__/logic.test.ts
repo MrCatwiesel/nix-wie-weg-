@@ -63,7 +63,7 @@ describe('Übersicht', () => {
 
 describe('Vorschläge', () => {
   it('passt zur Anreise und überspringt Vorhandenes', () => {
-    const auto = suggestDocuments('auto', [{ title: 'Impfpass' }]).map((d) => d.title)
+    const auto = suggestDocuments('auto', [{ title: 'Impfpass', person: '' }]).map((d) => d.title)
     expect(auto).toContain('Führerschein')
     expect(auto).not.toContain('Impfpass')
     expect(suggestDocuments('flug').map((d) => d.title)).toContain('Flugtickets / Bordkarten')
@@ -86,5 +86,15 @@ describe('Telefon und Nummern', () => {
     expect(validateDocument(emptyDocumentDraft()).title).toBeDefined()
     expect(validateContact(emptyContactDraft({ label: 'X', phone: '12' })).phone).toBeDefined()
     expect(validateContact(emptyContactDraft({ label: 'X', phone: '+49 30 1234' }))).toEqual({})
+  })
+})
+
+describe('Vorschläge mit Teilnehmern', () => {
+  it('persönliche Dokumente je Person, gemeinsame einmal', () => {
+    const d = suggestDocuments('auto', [{ title: 'Impfpass', person: 'Ich' }], ['Ich', 'Anna'])
+    const ausweise = d.filter((x) => x.type === 'ausweis').map((x) => x.person)
+    expect(ausweise).toEqual(['Ich', 'Anna'])
+    expect(d.filter((x) => x.title === 'Impfpass').map((x) => x.person)).toEqual(['Anna'])
+    expect(d.filter((x) => x.title === 'Führerschein').map((x) => x.person)).toEqual([''])
   })
 })

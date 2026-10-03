@@ -9,6 +9,8 @@ export interface Trip {
   /** ISO-Datum YYYY-MM-DD */
   endDate: string
   travelers: number
+  /** Namen der Mitreisenden, z. B. ["Ich", "Anna"]; leer = nicht festgelegt */
+  participants: string[]
   /** Gesamtbudget in `currency` */
   budget: number | null
   currency: string

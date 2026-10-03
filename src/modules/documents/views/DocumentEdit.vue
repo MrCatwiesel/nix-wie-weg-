@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { TripContextHeader, tripRepository, type Trip } from '@/modules/trip/public'
+import { PersonSelect, TripContextHeader, tripRepository, type Trip } from '@/modules/trip/public'
 import { documentRepository } from '../repository'
 import { VALIDITY_TEXT, emptyDocumentDraft, validateDocument, validity } from '../logic'
 import { DOC_STATUS, DOC_TYPE, type TravelDocumentDraft } from '../types'
@@ -70,7 +70,7 @@ async function remove() {
     </div>
     <div class="col-12 col-md-6">
       <label for="person" class="form-label">Für wen?</label>
-      <input id="person" v-model="draft.person" class="form-control" placeholder="leer = für alle" />
+      <PersonSelect v-model="draft.person" :trip-id="tripId" input-id="person" />
     </div>
     <div class="col-12">
       <label for="title" class="form-label">Bezeichnung</label>

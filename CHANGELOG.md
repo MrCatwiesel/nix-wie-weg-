@@ -1,5 +1,21 @@
 # Änderungsprotokoll
 
+## 0.7.0 – 2026-10-03
+
+### Neu
+- Teilnehmer pro Reise („Wer reist mit?“); die Personenzahl ergibt sich daraus
+- Packliste getrennt pro Person:
+  - Vorlagen legen Persönliches (Kleidung, Zahnbürste, Ladekabel, Schuhe …) je Teilnehmer an, Gemeinsames (Duschgel, Adapter, Zelt …) einmal
+  - Auswahl, für wen Persönliches angelegt wird
+  - Reiter „Alle“, je Person und „Gemeinsam“, jeweils mit eigenem Fortschritt und Warnung bei fehlenden wichtigen Dingen
+  - Schnelleingabe ordnet neue Einträge der gewählten Person zu
+- Reiseapotheke: Medikamente und Einnahmeplan nach Person filtern
+- Dokumente: Vorschläge legen Ausweis, Versicherungskarte und Impfpass je Teilnehmer an
+- „Für wen?“ in allen Formularen als Auswahl aus den Teilnehmern
+
+### Geändert
+- Datenbank-Version 7 (bestehende Reisen bekommen eine leere Teilnehmerliste)
+
 ## 0.6.0 – 2026-10-03
 
 ### Neu

@@ -12,6 +12,7 @@ export function emptyTripDraft(): TripDraft {
     startDate: '',
     endDate: '',
     travelers: 2,
+    participants: [],
     budget: null,
     currency: 'EUR',
     transport: 'auto',
@@ -44,6 +45,24 @@ export function budgetPerPersonDay(draft: Pick<TripDraft, 'budget' | 'travelers'
   return draft.budget / draft.travelers / tripDays(draft.startDate, draft.endDate)
 }
 
+/** Teilnehmer einer Reise – auch für ältere Datensätze ohne das Feld. */
+export function participantsOf(trip: Pick<TripDraft, 'participants'> | undefined | null): string[] {
+  return trip?.participants ?? []
+}
+
+/** Bereinigt die Teilnehmerliste: getrimmt, ohne Leere und ohne Doppelte (Groß-/Kleinschreibung egal). */
+export function cleanParticipants(names: string[]): string[] {
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const n of names) {
+    const t = n.trim()
+    if (!t || seen.has(t.toLowerCase())) continue
+    seen.add(t.toLowerCase())
+    out.push(t)
+  }
+  return out
+}
+
 /** Prüft einen Entwurf und liefert Fehlermeldungen je Feld. */
 export function validateTrip(draft: TripDraft): Partial<Record<keyof TripDraft, string>> {
   const errors: Partial<Record<keyof TripDraft, string>> = {}
@@ -58,5 +77,7 @@ export function validateTrip(draft: TripDraft): Partial<Record<keyof TripDraft, 
     errors.travelers = 'Mindestens eine reisende Person.'
   }
   if (draft.budget !== null && draft.budget < 0) errors.budget = 'Budget darf nicht negativ sein.'
+  const names = (draft.participants ?? []).map((n) => n.trim().toLowerCase()).filter(Boolean)
+  if (new Set(names).size !== names.length) errors.participants = 'Jeder Name nur einmal.'
   return errors
 }

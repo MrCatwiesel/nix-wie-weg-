@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { TripContextHeader } from '@/modules/trip/public'
+import { PersonSelect, TripContextHeader } from '@/modules/trip/public'
 import { packingRepository } from '../repository'
-import { emptyPackingDraft, persons, validatePacking } from '../logic'
+import { emptyPackingDraft, validatePacking } from '../logic'
 import { CATEGORY, type PackingDraft } from '../types'
 
 const props = defineProps<{ tripId: string; id: string }>()
 const router = useRouter()
 
 const draft = reactive<PackingDraft>(emptyPackingDraft())
-const people = ref<string[]>([])
 const submitted = ref(false)
 const listPath = computed(() => `/trip/${props.tripId}/packliste`)
 
@@ -19,7 +18,6 @@ onMounted(async () => {
   if (!item) return router.replace(listPath.value)
   const { id: _i, tripId: _t, createdAt: _c, updatedAt: _u, ...rest } = item
   Object.assign(draft, rest)
-  people.value = persons(await packingRepository.listByTrip(props.tripId))
 })
 
 const errors = computed(() => validatePacking({ ...draft, quantity: Number(draft.quantity) }))
@@ -61,8 +59,7 @@ async function remove() {
     </div>
     <div class="col-12 col-md-6">
       <label for="person" class="form-label">Für wen?</label>
-      <input id="person" v-model="draft.person" class="form-control" list="people" placeholder="leer = für alle" />
-      <datalist id="people"><option v-for="p in people" :key="p" :value="p" /></datalist>
+      <PersonSelect v-model="draft.person" :trip-id="tripId" input-id="person" />
     </div>
     <div class="col-12 d-flex flex-wrap gap-4">
       <div class="form-check form-switch">

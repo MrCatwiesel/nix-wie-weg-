@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useLiveQuery } from '@/core/composables'
-import { TripContextHeader } from '@/modules/trip/public'
+import { TripContextHeader, participantsOf, tripRepository, type Trip } from '@/modules/trip/public'
 import { packingRepository } from '../repository'
-import { emptyPackingDraft, groupByCategory, parseQuickAdd, persons, progress } from '../logic'
+import { SHARED, emptyPackingDraft, groupByCategory, parseQuickAdd, persons, progress, progressByPerson } from '../logic'
 import { CATEGORY, type PackingCategory, type PackingItem } from '../types'
 
 const props = defineProps<{ tripId: string }>()
 
 const list = useLiveQuery(() => packingRepository.listByTrip(props.tripId), [] as PackingItem[])
+const trip = useLiveQuery(() => tripRepository.get(props.tripId), undefined as Trip | undefined)
 
 const openOnly = ref(false)
 const person = ref('')
@@ -17,9 +18,17 @@ const quickName = ref('')
 const quickCategory = ref<PackingCategory>('sonstiges')
 const collapsed = ref(new Set<PackingCategory>())
 
-const groups = computed(() => groupByCategory(list.value, { openOnly: openOnly.value, person: person.value, search: search.value }))
-const prog = computed(() => progress(list.value))
-const people = computed(() => persons(list.value))
+const includeShared = ref(true)
+
+/** Teilnehmer der Reise plus früher frei eingetragene Namen */
+const people = computed(() => [...new Set([...participantsOf(trip.value), ...persons(list.value)])])
+const tabs = computed(() => (people.value.length ? progressByPerson(list.value, people.value) : []))
+const groups = computed(() =>
+  groupByCategory(list.value, { openOnly: openOnly.value, person: person.value, includeShared: includeShared.value, search: search.value })
+)
+/** Fortschritt für den gewählten Reiter (Person bzw. Gemeinsam) oder für alles */
+const prog = computed(() => tabs.value.find((t) => t.person === person.value)?.progress ?? progress(list.value))
+const tabLabel = (p: string) => (p === SHARED ? 'Gemeinsam' : p)
 
 function toggle(item: PackingItem) {
   packingRepository.setPacked(item.id, !item.packed)
@@ -35,7 +44,7 @@ function toggleGroup(c: PackingCategory) {
 async function quickAdd() {
   if (!quickName.value.trim()) return
   const { name, quantity } = parseQuickAdd(quickName.value)
-  await packingRepository.create(props.tripId, emptyPackingDraft({ name, quantity, category: quickCategory.value, person: person.value }))
+  await packingRepository.create(props.tripId, emptyPackingDraft({ name, quantity, category: quickCategory.value, person: person.value === SHARED ? '' : person.value }))
   quickName.value = ''
 }
 
@@ -78,9 +87,24 @@ async function unpackAll() {
       </div>
     </div>
 
+    <!-- Reiter pro Person -->
+    <ul v-if="tabs.length" class="nav nav-pills flex-nowrap overflow-auto mb-3 person-tabs">
+      <li class="nav-item">
+        <button class="nav-link text-nowrap" :class="{ active: person === '' }" @click="person = ''">Alle</button>
+      </li>
+      <li v-for="t in tabs" :key="t.person" class="nav-item">
+        <button class="nav-link text-nowrap" :class="{ active: person === t.person }" @click="person = t.person">
+          <i class="bi me-1" :class="t.person === SHARED ? 'bi-people' : 'bi-person'" aria-hidden="true"></i>{{ tabLabel(t.person) }}
+          <span class="small opacity-75 ms-1">{{ t.progress.packed }}/{{ t.progress.total }}</span>
+          <i v-if="t.progress.essentialOpen" class="bi bi-exclamation-circle-fill text-danger ms-1 small" title="Wichtiges fehlt"></i>
+        </button>
+      </li>
+    </ul>
+
     <!-- Schnell hinzufügen -->
     <form class="input-group mb-3" @submit.prevent="quickAdd">
-      <input v-model="quickName" class="form-control" placeholder="Hinzufügen, z. B. „2x Badehose“" aria-label="Neuer Eintrag" />
+      <input v-model="quickName" class="form-control" aria-label="Neuer Eintrag"
+             :placeholder="person && person !== SHARED ? `Für ${person}, z. B. „2x Badehose“` : 'Hinzufügen, z. B. „2x Badehose“'" />
       <select v-model="quickCategory" class="form-select flex-grow-0 w-auto" aria-label="Kategorie">
         <option v-for="(c, key) in CATEGORY" :key="key" :value="key">{{ c.label }}</option>
       </select>
@@ -90,10 +114,10 @@ async function unpackAll() {
     <!-- Filter & Aktionen -->
     <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
       <input v-model="search" type="search" class="form-control form-control-sm w-auto flex-grow-1" placeholder="Suchen" aria-label="Suchen" />
-      <select v-if="people.length" v-model="person" class="form-select form-select-sm w-auto" aria-label="Person">
-        <option value="">Alle Personen</option>
-        <option v-for="p in people" :key="p" :value="p">{{ p }}</option>
-      </select>
+      <div v-if="person && person !== SHARED" class="form-check form-switch mb-0">
+        <input id="incl-shared" v-model="includeShared" class="form-check-input" type="checkbox" role="switch" />
+        <label class="form-check-label small" for="incl-shared">mit Gemeinsamem</label>
+      </div>
       <div class="form-check form-switch mb-0">
         <input id="open-only" v-model="openOnly" class="form-check-input" type="checkbox" role="switch" />
         <label class="form-check-label small" for="open-only">Nur offene</label>
@@ -128,7 +152,7 @@ async function unpackAll() {
           <label class="flex-grow-1 mb-0" :for="`p-${i.id}`" :class="{ 'text-decoration-line-through': i.packed }">
             <span v-if="i.quantity > 1" class="fw-semibold">{{ i.quantity }}× </span>{{ i.name }}
             <i v-if="i.essential" class="bi bi-exclamation-circle-fill text-danger small ms-1" title="Wichtig" aria-label="Wichtig"></i>
-            <span v-if="i.person" class="badge text-bg-light border ms-1">{{ i.person }}</span>
+            <span v-if="i.person && person !== i.person" class="badge text-bg-light border ms-1">{{ i.person }}</span>
           </label>
           <RouterLink :to="`/trip/${tripId}/packliste/${i.id}`" class="btn btn-sm btn-link text-body-secondary" :aria-label="`${i.name} bearbeiten`">
             <i class="bi bi-pencil" aria-hidden="true"></i>
@@ -146,5 +170,8 @@ async function unpackAll() {
 }
 .flex-none {
   flex: none;
+}
+.person-tabs {
+  scrollbar-width: none;
 }
 </style>

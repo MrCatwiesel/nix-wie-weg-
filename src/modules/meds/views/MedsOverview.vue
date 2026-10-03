@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { useLiveQuery } from '@/core/composables'
 import { diffDays } from '@/core/dates'
 import { formatDate } from '@/core/format'
-import { TripContextHeader, tripRepository, type Trip } from '@/modules/trip/public'
+import { TripContextHeader, participantsOf, tripRepository, type Trip } from '@/modules/trip/public'
 import { medicationRepository, vaccinationRepository } from '../repository'
 import {
   DEFAULT_RESERVE_DAYS, dailySchedule, emptyMedicationDraft, expiryStatus, sortMeds, stockStatus, unitsNeeded,
@@ -22,9 +22,11 @@ const tab = ref<Tab>('medikamente')
 const planPerson = ref('')
 
 const days = computed(() => (trip.value ? diffDays(trip.value.startDate, trip.value.endDate) + 1 : 1))
-const sorted = computed(() => sortMeds(meds.value))
+const sorted = computed(() =>
+  sortMeds(meds.value.filter((m) => !planPerson.value || !m.person || m.person === planPerson.value))
+)
 const schedule = computed(() => dailySchedule(meds.value, planPerson.value))
-const people = computed(() => [...new Set(meds.value.map((m) => m.person).filter(Boolean))].sort())
+const people = computed(() => [...new Set([...participantsOf(trip.value), ...meds.value.map((m) => m.person).filter(Boolean)])])
 const missingKit = computed(() => {
   const have = new Set(meds.value.map((m) => m.name.toLowerCase()))
   return FIRST_AID_KIT.filter((k) => !have.has(k.name.toLowerCase()))
@@ -67,6 +69,15 @@ async function addKit() {
       </button>
     </li>
   </ul>
+
+  <!-- Person wählen (gilt für Medikamente und Einnahmeplan) -->
+  <div v-if="people.length && tab !== 'impfungen'" class="d-flex flex-wrap gap-2 mb-3">
+    <button type="button" class="btn btn-sm" :class="planPerson === '' ? 'btn-secondary' : 'btn-outline-secondary'" @click="planPerson = ''">Alle</button>
+    <button v-for="p in people" :key="p" type="button" class="btn btn-sm"
+            :class="planPerson === p ? 'btn-secondary' : 'btn-outline-secondary'" @click="planPerson = p">
+      <i class="bi bi-person me-1" aria-hidden="true"></i>{{ p }}
+    </button>
+  </div>
 
   <!-- Medikamente -->
   <template v-if="tab === 'medikamente'">
@@ -123,10 +134,6 @@ async function addKit() {
 
   <!-- Einnahmeplan -->
   <template v-else-if="tab === 'plan'">
-    <select v-if="people.length" v-model="planPerson" class="form-select form-select-sm w-auto mb-3" aria-label="Person">
-      <option value="">Alle Personen</option>
-      <option v-for="p in people" :key="p" :value="p">{{ p }}</option>
-    </select>
     <p v-if="schedule.length === 0" class="text-body-secondary">Keine Dauermedikation mit Einnahmezeiten eingetragen.</p>
     <ul v-else class="list-group mb-3">
       <li v-for="(e, idx) in schedule" :key="idx" class="list-group-item d-flex gap-3 align-items-center">

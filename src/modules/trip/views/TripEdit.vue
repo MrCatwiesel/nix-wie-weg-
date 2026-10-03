@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { emptyTripDraft, tripRepository } from '../repository'
-import { budgetPerPersonDay, formatMoney, tripDays, validateTrip } from '../logic'
+import { budgetPerPersonDay, cleanParticipants, formatMoney, tripDays, validateTrip } from '../logic'
 import { TRANSPORT_LABELS, type TripDraft } from '../types'
 
 const props = defineProps<{ id?: string }>()
@@ -18,8 +18,24 @@ onMounted(async () => {
   const trip = await tripRepository.get(props.id)
   if (!trip) return router.replace('/trip')
   const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = trip
-  Object.assign(draft, rest)
+  Object.assign(draft, { ...rest, participants: [...(rest.participants ?? [])] })
 })
+
+const newParticipant = ref('')
+
+function addParticipant() {
+  const name = newParticipant.value.trim()
+  if (!name) return
+  draft.participants = cleanParticipants([...draft.participants, name])
+  newParticipant.value = ''
+  // Personenzahl folgt der Teilnehmerliste
+  draft.travelers = Math.max(draft.travelers, draft.participants.length)
+}
+
+function removeParticipant(i: number) {
+  draft.participants.splice(i, 1)
+  if (draft.participants.length) draft.travelers = draft.participants.length
+}
 
 const errors = computed(() => validateTrip(draft))
 const hasErrors = computed(() => Object.keys(errors.value).length > 0)
@@ -40,7 +56,9 @@ async function save() {
   try {
     // Leeres Zahlenfeld liefert "" – als "kein Budget" speichern.
     const budget = typeof draft.budget === 'number' && !Number.isNaN(draft.budget) ? draft.budget : null
-    const plain: TripDraft = { ...draft, budget, title: draft.title.trim(), destination: draft.destination.trim() }
+    const participants = cleanParticipants(draft.participants)
+    const travelers = participants.length || draft.travelers
+    const plain: TripDraft = { ...draft, budget, participants, travelers, title: draft.title.trim(), destination: draft.destination.trim() }
     if (props.id) {
       await tripRepository.update(props.id, plain)
       router.push(`/trip/${props.id}`)
@@ -89,9 +107,30 @@ function invalid(field: keyof TripDraft) {
       <div class="invalid-feedback">{{ errors.endDate }}</div>
     </div>
 
+    <div class="col-12">
+      <label for="participant" class="form-label">Wer reist mit?</label>
+      <div v-if="draft.participants.length" class="d-flex flex-wrap gap-2 mb-2">
+        <span v-for="(p, i) in draft.participants" :key="p" class="badge rounded-pill text-bg-primary d-flex align-items-center gap-1 fs-6 fw-normal">
+          <i class="bi bi-person" aria-hidden="true"></i>{{ p }}
+          <button type="button" class="btn-close btn-close-white ms-1" style="font-size: 0.6rem" :aria-label="`${p} entfernen`"
+                  @click="removeParticipant(i)"></button>
+        </span>
+      </div>
+      <div class="input-group">
+        <input id="participant" v-model="newParticipant" class="form-control" placeholder="Name, z. B. Ich oder Anna"
+               @keydown.enter.prevent="addParticipant" />
+        <button type="button" class="btn btn-outline-primary" @click="addParticipant">
+          <i class="bi bi-person-plus" aria-hidden="true"></i><span class="visually-hidden">Hinzufügen</span>
+        </button>
+      </div>
+      <div class="form-text">Optional. Damit lassen sich Packliste, Medikamente und Dokumente pro Person trennen.</div>
+      <div v-if="invalid('participants')" class="text-danger small">{{ errors.participants }}</div>
+    </div>
+
     <div class="col-6 col-md-4">
       <label for="travelers" class="form-label">Personen</label>
       <input id="travelers" v-model.number="draft.travelers" type="number" min="1" step="1" class="form-control"
+             :disabled="draft.participants.length > 0" :title="draft.participants.length ? 'Ergibt sich aus den Teilnehmern' : undefined"
              :class="{ 'is-invalid': invalid('travelers') }" />
       <div class="invalid-feedback">{{ errors.travelers }}</div>
     </div>
