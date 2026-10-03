@@ -59,6 +59,12 @@ Module, die zu einer Reise gehören, brauchen kein `navTo`. Stattdessen erschein
 
 Vollständige Beispiele: `src/modules/accommodation/index.ts` und `src/modules/activity/index.ts`. Für die Kopfzeile von Unterseiten `TripContextHeader` aus `@/modules/trip/public` verwenden.
 
+## Daten anderer Module nutzen
+
+Nur über deren `public.ts` importieren (z. B. `@/modules/activity/public`). Braucht ein Modul etwas, das noch nicht öffentlich ist, wird es dort ergänzt – nie direkt aus `repository.ts` oder `types.ts` eines anderen Moduls importieren.
+
+Jeder Datensatz braucht `createdAt` und `updatedAt`, und jede Änderung setzt `updatedAt` neu – sonst funktioniert der Abgleich zwischen Geräten nicht.
+
 ## 4. Registrieren
 
 In `src/modules/index.ts`:

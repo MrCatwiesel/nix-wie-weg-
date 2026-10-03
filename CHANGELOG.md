@@ -1,5 +1,22 @@
 # Änderungsprotokoll
 
+## 1.0.0 – 2026-10-04
+
+Alle geplanten Meilensteine (M0–M6) sind umgesetzt.
+
+### Neu
+- **Ausgaben unterwegs:** Schnelleingabe („23,50 Pizza“), Kategorien, Fremdwährung mit Kurs, Belegfoto, Zahler und Aufteilung; Überblick mit Budgetanteil, Tagesdurchschnitt und Hochrechnung; Ausgleich „wer gibt wem wie viel“ mit möglichst wenigen Überweisungen
+- **Karte:** OpenStreetMap mit Unterkünften und Unternehmungen; verorten per Adresssuche (Nominatim) oder Antippen; Tagesfilter; eigener Standort und „In deiner Nähe“; Route in Apple Karten/Google Maps; angesehene Kartenausschnitte bleiben offline verfügbar
+- **Mit Mitreisenden teilen:** Reise als Datei verschicken (AirDrop, Nachricht) und auf dem anderen Gerät einlesen; neuere Änderungen gewinnen
+- **Einlesen führt jetzt immer zusammen** (Backup und geteilte Reisen), mit Ergebnis „x neu, y aktualisiert“
+- **Spenden-Bereich:** Link zentral in `src/config.ts`; Hinweis in den Einstellungen und nach dem Erstellen der Reise-Webseite (nur wenn ein Link eingetragen ist)
+- Einstellungen: Über-Bereich mit Version, Quellcode-Link und Quellenangaben der Dienste
+
+### Geändert
+- Datenbank-Version 12 (neue Tabellen `expenses`, `places`), Backup enthält sie
+- Versionsnummer kommt automatisch aus `package.json`
+- Unterkünfte haben eine öffentliche Schnittstelle (`accommodation/public.ts`)
+
 ## 0.10.0 – 2026-10-04
 
 ### Neu

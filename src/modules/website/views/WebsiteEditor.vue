@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import bootstrapCssRaw from 'bootstrap/dist/css/bootstrap.min.css?raw'
 import { useLiveQuery } from '@/core/composables'
 import { formatBytes } from '@/core/storage'
+import DonationHint from '@/ui/DonationHint.vue'
 import { blobToDataUrl, resizeBlob } from '@/services/images'
 import { TripContextHeader, tripRepository, type Trip } from '@/modules/trip/public'
 import { journalRepository, orderPhotos, photoRepository, useObjectUrls, type JournalEntry, type Photo } from '@/modules/journal/public'
@@ -270,6 +271,7 @@ function resetTexts() {
                 <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>Öffnen
               </a>
             </div>
+            <DonationHint class="mt-3 mb-0" text="Schön geworden? Die App ist kostenlos – über eine kleine Spende freue ich mich." />
           </div>
 
           <details class="small mt-3">

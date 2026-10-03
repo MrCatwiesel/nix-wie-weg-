@@ -78,6 +78,7 @@ async function remove() {
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
           <li><RouterLink class="dropdown-item" :to="`/trip/${trip.id}/bearbeiten`">Bearbeiten</RouterLink></li>
+          <li><RouterLink class="dropdown-item" :to="`/trip/${trip.id}/teilen`">Mit Mitreisenden teilen</RouterLink></li>
           <li><button class="dropdown-item text-danger" @click="remove">Löschen</button></li>
         </ul>
       </div>

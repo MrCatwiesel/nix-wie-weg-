@@ -5,3 +5,6 @@ declare module '*.vue' {
   const component: DefineComponent<object, object, unknown>
   export default component
 }
+
+/** Versionsnummer aus package.json (vite.config.ts → define) */
+declare const __APP_VERSION__: string

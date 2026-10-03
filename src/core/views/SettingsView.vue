@@ -2,6 +2,8 @@
 import { onMounted, ref } from 'vue'
 import { downloadJson, exportBackup, importBackup, type BackupFile } from '../backup'
 import { formatBytes, requestPersistentStorage, storageInfo, type StorageInfo } from '../storage'
+import { describeStats } from '../merge'
+import { APP_CONFIG, APP_VERSION } from '@/config'
 
 const message = ref<{ type: 'success' | 'danger'; text: string } | null>(null)
 const includePhotos = ref(false)
@@ -34,8 +36,9 @@ async function doImport(event: Event) {
   busy.value = true
   try {
     const data = JSON.parse(await file.text()) as BackupFile
-    const count = await importBackup(data)
-    message.value = { type: 'success', text: `${count} Einträge wiederhergestellt.` }
+    const stats = await importBackup(data)
+    const what = data.scope ? `Reise „${data.scope.title}“` : 'Backup'
+    message.value = { type: 'success', text: `${what} eingelesen: ${describeStats(stats)}.` }
     await refreshStorage()
   } catch (err) {
     message.value = { type: 'danger', text: `Import fehlgeschlagen: ${(err as Error).message}` }
@@ -64,7 +67,8 @@ async function persist() {
       <h2 class="h5">Datensicherung</h2>
       <p class="text-body-secondary small">
         Alle Daten liegen nur auf diesem Gerät. Sichere sie regelmäßig als Datei –
-        damit kannst du sie auch auf ein anderes Gerät übertragen.
+        damit kannst du sie auch auf ein anderes Gerät übertragen. Beim Einlesen wird zusammengeführt:
+        Neues kommt dazu, bei Unterschieden gewinnt die neuere Änderung.
       </p>
       <div class="form-check form-switch mb-2">
         <input id="photos" v-model="includePhotos" class="form-check-input" type="checkbox" role="switch" />
@@ -76,7 +80,7 @@ async function persist() {
           <i v-else class="bi bi-download me-1" aria-hidden="true"></i>Backup exportieren
         </button>
         <label class="btn btn-outline-secondary mb-0" :class="{ disabled: busy }">
-          <i class="bi bi-upload me-1" aria-hidden="true"></i>Backup importieren
+          <i class="bi bi-upload me-1" aria-hidden="true"></i>Backup oder geteilte Reise einlesen
           <input type="file" accept="application/json" class="d-none" @change="doImport" />
         </label>
       </div>
@@ -107,10 +111,21 @@ async function persist() {
 
   <section class="card">
     <div class="card-body">
-      <h2 class="h5">Über „Nix wie weg“</h2>
-      <p class="small text-body-secondary mb-0">
-        Version {{ '0.10.0' }} · Freie Software, entwickelt in der Freizeit.
-        Wenn dir die App hilft, freuen wir uns über eine Spende.
+      <h2 class="h5">Über „{{ APP_CONFIG.name }}“</h2>
+      <p class="small text-body-secondary">
+        Version {{ APP_VERSION }} · Freie Software, entwickelt in der Freizeit. Kostenlos, ohne Werbung, ohne Konto –
+        deine Daten bleiben auf deinem Gerät.
+      </p>
+      <div class="d-flex flex-wrap gap-2">
+        <a v-if="APP_CONFIG.donationUrl" :href="APP_CONFIG.donationUrl" target="_blank" rel="noopener" class="btn btn-sm btn-outline-danger">
+          <i class="bi bi-heart-fill me-1" aria-hidden="true"></i>Über {{ APP_CONFIG.donationLabel }} unterstützen
+        </a>
+        <a :href="APP_CONFIG.repositoryUrl" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-github me-1" aria-hidden="true"></i>Quellcode
+        </a>
+      </div>
+      <p class="small text-body-secondary mt-3 mb-0">
+        Dienste: Wetter von Open-Meteo.com (CC BY 4.0), Karten und Adresssuche © OpenStreetMap-Mitwirkende (ODbL).
       </p>
     </div>
   </section>

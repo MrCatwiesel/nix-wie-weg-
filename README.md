@@ -2,7 +2,13 @@
 
 Reise-App von der Planung bis zur Reise-Webseite – offline zuerst, als installierbare Web-App (PWA) für Handy, Tablet und PC.
 
-**Stand 0.10.0:** Planung komplett (M1: **Reiseprojekt**, **An- und Rückreise**, **Unterkünfte**, **Unternehmungen**, Budgetvergleich) und Vorbereitung komplett (M2: **Packliste**, **Reiseapotheke**, **Dokumente & Notfall**) – alles auch getrennt pro Teilnehmer. Unterwegs: **Tagesplaner** mit Wetter und Öffnungszeiten (M3). Erinnern: **Reisetagebuch mit Fotos** (M4). Teilen: **Reise-Webseite** mit 3 Vorlagen als einzelne HTML-Datei (M5).
+**Stand 1.0.0 – alle Meilensteine umgesetzt:**
+
+- **Planen:** Reiseprojekt mit Teilnehmern, An- und Rückreise, Unterkünfte, Unternehmungen, Budget
+- **Vorbereiten:** Packliste (Vorlagen, pro Person), Reiseapotheke, Dokumente & Notfallnummern
+- **Unterwegs:** Tagesplaner mit Wetter und Öffnungszeiten, Karte, Ausgaben mit Ausgleich
+- **Erinnern & teilen:** Reisetagebuch mit Fotos, Reise-Webseite als eine HTML-Datei
+- **Zusammen reisen:** Reise als Datei mit Mitreisenden abgleichen (ohne Server)
 
 **App online:** https://mrcatwiesel.github.io/nix-wie-weg-/
 
@@ -63,9 +69,12 @@ src/
     documents/     Modul "Dokumente & Notfall"
     dayplanner/    Modul "Tagesplaner" (Wetter, Vorschläge, „Heute“)
     journal/       Modul "Reisetagebuch" (Einträge, Fotos, Highlights)
+    expenses/      Modul "Ausgaben" (Budget, Ausgleich)
+    map/           Modul "Karte" (Leaflet, OpenStreetMap)
     website/       Modul "Reise-Webseite" (templates/ = Design-Vorlagen, render.ts = HTML-Datei)
     activity/      Modul "Unternehmungen"
-  services/        weather.ts (Open-Meteo), openingHours.ts (Öffnungszeiten-Parser), images.ts (Fotos verkleinern)
+  services/        weather.ts (Open-Meteo), geocoding.ts (Nominatim), openingHours.ts, images.ts
+  config.ts        App-Einstellungen (Spendenlink, Repository)
 docs/
   ARCHITEKTUR.md   Regeln und Aufbau
   MODUL-VORLAGE.md So entsteht ein neues Modul
@@ -84,10 +93,18 @@ docs/
 | M0 Fundament | Gerüst, Kern, Datenbank, PWA, Theme | erledigt |
 | M1 Planung | Reiseprojekt, Anreise, Unterkünfte, Unternehmungen, Budgetvergleich | erledigt |
 | M2 Vorbereitung | Packliste, Reiseapotheke, Dokumente & Notfall | erledigt |
-| M3 Unterwegs | Tagesplaner ✔ (Wetter, Öffnungszeiten), Karte offline | in Arbeit |
-| M4 Tagebuch | Tageseinträge ✔, Fotos ✔, Highlights ✔, Ausgaben | in Arbeit |
+| M3 Unterwegs | Tagesplaner, Wetter, Öffnungszeiten, Karte, Ausgaben | erledigt |
+| M4 Tagebuch | Einträge, Fotos, Highlights | erledigt |
 | M5 Webseite | 3 Vorlagen, Farbe/Schrift/Dunkel, Highlights, Export als eine HTML-Datei, Teilen | erledigt |
-| M6 Ausbau | Sync, Mitreisende, App Stores, Spenden-Dienste | offen |
+| M6 Ausbau | Abgleich zwischen Geräten, Spenden-Bereich | erledigt (App-Store-Version optional, siehe unten) |
+
+## Spenden einrichten
+
+In `src/config.ts` bei `donationUrl` den eigenen Link eintragen (z. B. Ko-fi, Liberapay, GitHub Sponsors). Ist das Feld leer, erscheinen keine Spenden-Hinweise.
+
+## App Store (optional)
+
+Die App ist eine PWA und lässt sich über „Teilen → Zum Home-Bildschirm“ wie eine App installieren. Eine Version im App Store wäre mit Capacitor möglich, braucht aber einen Mac mit Xcode und ein Apple-Entwicklerkonto (99 $/Jahr).
 
 ## Lizenz
 

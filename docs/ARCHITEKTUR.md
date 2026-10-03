@@ -39,6 +39,14 @@ Der Generator (`modules/website`) erzeugt **eine einzige HTML-Datei**: Bootstrap
 - `render.ts`: setzt das Dokument zusammen (Kopf, Farben, Schrift, Hell/Dunkel, Fotoansicht)
 - Alle Nutzertexte laufen durch `esc()`, Farben durch `safeColor()`.
 
+## Abgleich zwischen Geräten
+
+Ohne Server: `exportTrip()` (core/backup.ts) schreibt eine Reise mit allen zugehörigen Datensätzen (alle Tabellen mit `tripId`) in eine JSON-Datei. `importBackup()` führt zusammen: neue Datensätze werden ergänzt, vorhandene nur ersetzt, wenn `updatedAt` neuer ist (Logik in `core/merge.ts`). Löschungen werden nicht übertragen. Daher: **jeder Datensatz braucht `updatedAt`** (bzw. `createdAt`), und jede Änderung muss es setzen.
+
+## Konfiguration
+
+`src/config.ts` enthält App-Name, Repository- und Spendenlink. Die Versionsnummer kommt beim Bauen aus `package.json` (`__APP_VERSION__`).
+
 ## Entscheidungen
 
 | Datum | Entscheidung | Grund |
@@ -47,4 +55,5 @@ Der Generator (`modules/website`) erzeugt **eine einzige HTML-Datei**: Bootstrap
 | 2026-10-03 | Vue 3 + Bootstrap 5.3 | leicht lesbar, Bootstrap auch für Webseiten-Templates |
 | 2026-10-03 | Dexie/IndexedDB | große Datenmengen (Fotos) lokal, Live-Abfragen |
 | 2026-10-03 | Reise-Seite über `tripSection` erweiterbar | Reise-Modul muss neue Module nicht kennen |
+| 2026-10-04 | Abgleich per Datei, neuere Änderung gewinnt | kein Server, keine Konten, Datenschutz; einfach per AirDrop |
 | 2026-10-03 | Teilnehmer als Namensliste an der Reise (`participants`), Module speichern den Namen im Feld `person` | einfach, offline, ohne eigene Personen-Tabelle; `PersonSelect` aus `trip/public` für alle Formulare |

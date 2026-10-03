@@ -3,10 +3,15 @@ import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath, URL } from 'node:url'
+import { readFileSync } from 'node:fs'
+
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }
 
 export default defineConfig({
   // Relative Pfade: App läuft in jedem Ordner (Tiny-Server, GitHub Pages, USB-Stick …)
   base: './',
+  // Versionsnummer aus package.json in der App verfügbar machen
+  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   plugins: [
     vue(),
     // Service Worker + Manifest: App ist installierbar und läuft offline.
