@@ -166,7 +166,7 @@ async function remove() {
       <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1" aria-hidden="true"></i>Speichern</button>
       <RouterLink :to="listPath" class="btn btn-outline-secondary">Abbrechen</RouterLink>
       <button v-if="id" type="button" class="btn btn-outline-danger ms-auto" @click="remove">
-        <i class="bi bi-trash" aria-hidden="true"></i><span class="visually-hidden">Löschen</span>
+        <i class="bi bi-trash me-1" aria-hidden="true"></i>Löschen
       </button>
     </div>
   </form>

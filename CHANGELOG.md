@@ -1,5 +1,11 @@
 # Änderungsprotokoll
 
+## 1.0.1 – 2026-10-04
+
+### Geändert
+- Tagebuch: Einträge lassen sich direkt in der Übersicht über das ⋯-Menü löschen oder bearbeiten (mit Rückfrage, nennt die Zahl der Fotos)
+- Alle Formulare: Löschen-Knopf zeigt jetzt den Text „Löschen“ statt nur eines Symbols
+
 ## 1.0.0 – 2026-10-04
 
 Alle geplanten Meilensteine (M0–M6) sind umgesetzt.

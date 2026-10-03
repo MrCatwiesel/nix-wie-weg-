@@ -41,6 +41,13 @@ const lightbox = ref<{ photos: Photo[]; start: number } | null>(null)
 function toggleHighlight(e: JournalEntry) {
   journalRepository.setHighlight(e.id, !e.highlight)
 }
+
+async function removeEntry(e: JournalEntry) {
+  const n = photosByEntry.value.get(e.id)?.length ?? 0
+  const what = `„${e.title || 'Eintrag ohne Titel'}“${n ? ` mit ${n} ${n === 1 ? 'Foto' : 'Fotos'}` : ''}`
+  if (!confirm(`${what} löschen? Das lässt sich nicht rückgängig machen.`)) return
+  await journalRepository.remove(e.id)
+}
 </script>
 
 <template>
@@ -97,10 +104,21 @@ function toggleHighlight(e: JournalEntry) {
               <span v-if="moodOf(e.mood)" class="me-1" :title="moodOf(e.mood)!.label">{{ moodOf(e.mood)!.emoji }}</span>
               {{ e.title || 'Ohne Titel' }}
             </RouterLink>
-            <button type="button" class="btn btn-sm p-0 flex-none" :aria-label="e.highlight ? 'Highlight entfernen' : 'Als Highlight markieren'"
-                    @click="toggleHighlight(e)">
-              <i class="bi fs-5" :class="e.highlight ? 'bi-star-fill text-warning' : 'bi-star text-body-secondary'" aria-hidden="true"></i>
-            </button>
+            <div class="d-flex align-items-start gap-1 flex-none">
+              <button type="button" class="btn btn-sm p-0" :aria-label="e.highlight ? 'Highlight entfernen' : 'Als Highlight markieren'"
+                      @click="toggleHighlight(e)">
+                <i class="bi fs-5" :class="e.highlight ? 'bi-star-fill text-warning' : 'bi-star text-body-secondary'" aria-hidden="true"></i>
+              </button>
+              <div class="dropdown">
+                <button type="button" class="btn btn-sm btn-link text-body-secondary px-1 py-0" data-bs-toggle="dropdown" aria-label="Weitere Aktionen">
+                  <i class="bi bi-three-dots-vertical fs-5" aria-hidden="true"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><RouterLink class="dropdown-item" :to="`/trip/${tripId}/tagebuch/${e.id}`"><i class="bi bi-pencil me-2" aria-hidden="true"></i>Bearbeiten</RouterLink></li>
+                  <li><button type="button" class="dropdown-item text-danger" @click="removeEntry(e)"><i class="bi bi-trash me-2" aria-hidden="true"></i>Löschen</button></li>
+                </ul>
+              </div>
+            </div>
           </div>
           <div v-if="e.location" class="small text-body-secondary"><i class="bi bi-geo-alt" aria-hidden="true"></i> {{ e.location }}</div>
           <p v-if="e.text" class="small mb-0 mt-1">{{ excerpt(e.text) }}</p>

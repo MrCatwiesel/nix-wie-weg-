@@ -179,7 +179,7 @@ async function remove() {
       </button>
       <RouterLink :to="`/trip/${tripId}/unternehmungen`" class="btn btn-outline-secondary">Abbrechen</RouterLink>
       <button v-if="id" type="button" class="btn btn-outline-danger ms-auto" @click="remove">
-        <i class="bi bi-trash" aria-hidden="true"></i><span class="visually-hidden">Löschen</span>
+        <i class="bi bi-trash me-1" aria-hidden="true"></i>Löschen
       </button>
     </div>
   </form>
