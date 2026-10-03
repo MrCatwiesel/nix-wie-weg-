@@ -1,5 +1,5 @@
-/// <reference types="vitest/config" />
-import { defineConfig } from 'vite'
+// defineConfig aus vitest/config kennt zusätzlich den Abschnitt "test"
+import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath, URL } from 'node:url'
