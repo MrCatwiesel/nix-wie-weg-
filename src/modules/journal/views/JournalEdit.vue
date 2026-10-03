@@ -1,0 +1,264 @@
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { formatDayShort } from '@/core/format'
+import { requestPersistentStorage } from '@/core/storage'
+import { processImage } from '@/services/images'
+import { TripContextHeader, tripRepository, type Trip } from '@/modules/trip/public'
+import { journalRepository, photoRepository, type NewPhoto } from '../repository'
+import { defaultEntryDate, emptyEntryDraft, moveItem, orderPhotos, takenAtFromFile, validateEntry } from '../logic'
+import { MOODS, type JournalEntryDraft, type Photo } from '../types'
+import PhotoLightbox from '../components/PhotoLightbox.vue'
+
+const props = defineProps<{ tripId: string; id?: string }>()
+const router = useRouter()
+const route = useRoute()
+
+const draft = reactive<JournalEntryDraft>(emptyEntryDraft())
+const trip = ref<Trip>()
+const submitted = ref(false)
+const saving = ref(false)
+const processing = ref(0)
+const photoError = ref('')
+const listPath = computed(() => `/trip/${props.tripId}/tagebuch`)
+
+/** Ein Foto im Formular: vorhanden (aus der Datenbank) oder neu (noch nicht gespeichert). */
+interface PhotoItem {
+  key: string
+  url: string
+  full: Blob
+  caption: string
+  existing?: Photo
+  fresh?: NewPhoto
+}
+const items = ref<PhotoItem[]>([])
+const removed: string[] = []
+
+onMounted(async () => {
+  trip.value = await tripRepository.get(props.tripId)
+  if (!trip.value) return router.replace('/trip')
+  if (!props.id) {
+    const q = typeof route.query.tag === 'string' ? route.query.tag : ''
+    draft.date = q || defaultEntryDate(trip.value.startDate, trip.value.endDate)
+    return
+  }
+  const entry = await journalRepository.get(props.id)
+  if (!entry) return router.replace(listPath.value)
+  const { id: _i, tripId: _t, photoIds, createdAt: _c, updatedAt: _u, ...rest } = entry
+  Object.assign(draft, rest)
+  const photos = orderPhotos(photoIds, await photoRepository.listByEntry(props.id))
+  items.value = photos.map((p) => ({ key: p.id, url: URL.createObjectURL(p.thumb), full: p.full, caption: p.caption, existing: p }))
+})
+
+onUnmounted(() => items.value.forEach((i) => URL.revokeObjectURL(i.url)))
+
+async function addFiles(event: Event) {
+  const input = event.target as HTMLInputElement
+  const files = [...(input.files ?? [])]
+  input.value = ''
+  if (!files.length) return
+  photoError.value = ''
+  // Beim ersten Foto um dauerhaften Speicher bitten (Safari löscht sonst ggf. Daten)
+  requestPersistentStorage()
+  for (const file of files) {
+    processing.value++
+    try {
+      const img = await processImage(file)
+      const fresh: NewPhoto = { full: img.full, thumb: img.thumb, width: img.width, height: img.height, caption: '', takenAt: takenAtFromFile(file) }
+      items.value.push({ key: `tmp-${crypto.randomUUID()}`, url: URL.createObjectURL(img.thumb), full: img.full, caption: '', fresh })
+    } catch (e) {
+      photoError.value = `${file.name}: ${(e as Error).message}`
+    } finally {
+      processing.value--
+    }
+  }
+}
+
+function removePhoto(i: number) {
+  const [it] = items.value.splice(i, 1)
+  if (it.existing) removed.push(it.existing.id)
+  URL.revokeObjectURL(it.url)
+}
+
+function move(i: number, delta: -1 | 1) {
+  items.value = moveItem(items.value, i, delta)
+}
+
+const errors = computed(() => validateEntry(draft, items.value.length))
+const lightboxStart = ref<number | null>(null)
+const lightboxPhotos = computed(() => items.value.map((i) => ({ id: i.key, full: i.full, caption: i.caption })))
+
+async function save() {
+  submitted.value = true
+  if (Object.keys(errors.value).length || processing.value) return
+  saving.value = true
+  try {
+    const fresh: NewPhoto[] = []
+    const order: string[] = []
+    for (const it of items.value) {
+      if (it.fresh) {
+        order.push(`new:${fresh.length}`)
+        fresh.push({ ...it.fresh, caption: it.caption.trim() })
+      } else if (it.existing) {
+        order.push(it.existing.id)
+        if (it.caption !== it.existing.caption) await photoRepository.setCaption(it.existing.id, it.caption.trim())
+      }
+    }
+    const plain: JournalEntryDraft = { ...draft, title: draft.title.trim(), location: draft.location.trim() }
+    await journalRepository.save(props.tripId, props.id, plain, fresh, order, removed)
+    router.push(listPath.value)
+  } finally {
+    saving.value = false
+  }
+}
+
+async function remove() {
+  if (!props.id || !confirm('Diesen Eintrag mit allen Fotos löschen?')) return
+  await journalRepository.remove(props.id)
+  router.replace(listPath.value)
+}
+</script>
+
+<template>
+  <TripContextHeader :trip-id="tripId" :title="id ? 'Eintrag bearbeiten' : 'Neuer Eintrag'" />
+
+  <form class="row g-3" novalidate @submit.prevent="save">
+    <div class="col-6 col-md-4">
+      <label for="date" class="form-label">Tag</label>
+      <input id="date" v-model="draft.date" type="date" class="form-control" :class="{ 'is-invalid': submitted && errors.date }" />
+      <div class="form-text">{{ draft.date ? formatDayShort(draft.date) : '' }}</div>
+    </div>
+    <div class="col-6 col-md-8">
+      <label for="loc" class="form-label">Wo?</label>
+      <input id="loc" v-model="draft.location" class="form-control" placeholder="z. B. Malcesine" />
+    </div>
+    <div class="col-12">
+      <label for="title" class="form-label">Überschrift</label>
+      <input id="title" v-model="draft.title" class="form-control" placeholder="z. B. Mit der Seilbahn auf den Monte Baldo" />
+    </div>
+
+    <div class="col-12">
+      <label class="form-label d-block">Wie war der Tag?</label>
+      <div class="d-flex flex-wrap gap-1" role="radiogroup" aria-label="Stimmung">
+        <button v-for="m in MOODS" :key="m.value" type="button" class="btn mood-btn"
+                :class="draft.mood === m.value ? 'btn-primary' : 'btn-outline-secondary'" :aria-pressed="draft.mood === m.value"
+                :title="m.label" @click="draft.mood = draft.mood === m.value ? 0 : m.value">
+          <span class="fs-4">{{ m.emoji }}</span><span class="d-block small">{{ m.label }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <label for="text" class="form-label">Erlebt</label>
+      <textarea id="text" v-model="draft.text" rows="7" class="form-control"
+                placeholder="Was habt ihr gemacht? Was war besonders, lustig, lecker?"></textarea>
+    </div>
+
+    <!-- Fotos -->
+    <div class="col-12">
+      <label class="form-label d-block">Fotos</label>
+      <div class="photo-grid mb-2">
+        <figure v-for="(it, i) in items" :key="it.key" class="photo-item m-0">
+          <button type="button" class="photo-thumb" :aria-label="`Foto ${i + 1} groß anzeigen`" @click="lightboxStart = i">
+            <img :src="it.url" alt="" />
+            <span v-if="i === 0" class="badge text-bg-primary cover">Titelbild</span>
+          </button>
+          <input v-model="it.caption" class="form-control form-control-sm mt-1" placeholder="Bildunterschrift" :aria-label="`Bildunterschrift ${i + 1}`" />
+          <div class="d-flex justify-content-between mt-1">
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn btn-outline-secondary" :disabled="i === 0" aria-label="Nach vorn" @click="move(i, -1)">
+                <i class="bi bi-chevron-left" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="btn btn-outline-secondary" :disabled="i === items.length - 1" aria-label="Nach hinten" @click="move(i, 1)">
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </button>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger" aria-label="Foto entfernen" @click="removePhoto(i)">
+              <i class="bi bi-trash" aria-hidden="true"></i>
+            </button>
+          </div>
+        </figure>
+
+        <label class="photo-add">
+          <template v-if="processing">
+            <span class="spinner-border text-primary" aria-hidden="true"></span>
+            <span class="small mt-2">Bereite {{ processing }} vor …</span>
+          </template>
+          <template v-else>
+            <i class="bi bi-camera fs-2" aria-hidden="true"></i>
+            <span class="small mt-1">Fotos hinzufügen</span>
+          </template>
+          <input type="file" accept="image/*" multiple class="d-none" @change="addFiles" />
+        </label>
+      </div>
+      <div v-if="photoError" class="small text-danger">{{ photoError }}</div>
+      <div class="form-text">Fotos werden verkleinert gespeichert (max. 2048 px) – spart Platz auf dem Gerät.</div>
+    </div>
+
+    <div class="col-12">
+      <div class="form-check form-switch">
+        <input id="hl" v-model="draft.highlight" class="form-check-input" type="checkbox" role="switch" />
+        <label class="form-check-label" for="hl"><i class="bi bi-star-fill text-warning me-1" aria-hidden="true"></i>Highlight – kommt auf die Reise-Webseite</label>
+      </div>
+    </div>
+
+    <div v-if="submitted && errors.content" class="col-12 text-danger small">{{ errors.content }}</div>
+
+    <div class="col-12 d-flex gap-2">
+      <button type="submit" class="btn btn-primary" :disabled="saving || processing > 0">
+        <span v-if="saving" class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+        <i v-else class="bi bi-check-lg me-1" aria-hidden="true"></i>Speichern
+      </button>
+      <RouterLink :to="listPath" class="btn btn-outline-secondary">Abbrechen</RouterLink>
+      <button v-if="id" type="button" class="btn btn-outline-danger ms-auto" @click="remove">
+        <i class="bi bi-trash" aria-hidden="true"></i><span class="visually-hidden">Löschen</span>
+      </button>
+    </div>
+  </form>
+
+  <PhotoLightbox v-if="lightboxStart !== null" :photos="lightboxPhotos" :start="lightboxStart" @close="lightboxStart = null" />
+</template>
+
+<style scoped>
+.mood-btn {
+  min-width: 4.8rem;
+  line-height: 1.1;
+}
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+.photo-thumb {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 0;
+  padding: 0;
+  border-radius: var(--bs-border-radius);
+  overflow: hidden;
+  background: var(--bs-secondary-bg);
+}
+.photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.photo-thumb .cover {
+  position: absolute;
+  left: 0.35rem;
+  top: 0.35rem;
+}
+.photo-add {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  color: var(--bs-primary);
+  cursor: pointer;
+}
+</style>

@@ -2,7 +2,7 @@
 
 Reise-App von der Planung bis zur Reise-Webseite – offline zuerst, als installierbare Web-App (PWA) für Handy, Tablet und PC.
 
-**Stand 0.8.0:** Planung komplett (M1: **Reiseprojekt**, **An- und Rückreise**, **Unterkünfte**, **Unternehmungen**, Budgetvergleich) und Vorbereitung komplett (M2: **Packliste**, **Reiseapotheke**, **Dokumente & Notfall**) – alles auch getrennt pro Teilnehmer. Unterwegs: **Tagesplaner** mit Wetter und Öffnungszeiten (M3).
+**Stand 0.9.0:** Planung komplett (M1: **Reiseprojekt**, **An- und Rückreise**, **Unterkünfte**, **Unternehmungen**, Budgetvergleich) und Vorbereitung komplett (M2: **Packliste**, **Reiseapotheke**, **Dokumente & Notfall**) – alles auch getrennt pro Teilnehmer. Unterwegs: **Tagesplaner** mit Wetter und Öffnungszeiten (M3). Erinnern: **Reisetagebuch mit Fotos** (M4).
 
 **App online:** https://mrcatwiesel.github.io/nix-wie-weg-/
 
@@ -62,8 +62,9 @@ src/
     meds/          Modul "Reiseapotheke" (Medikamente, Einnahmeplan, Impfungen)
     documents/     Modul "Dokumente & Notfall"
     dayplanner/    Modul "Tagesplaner" (Wetter, Vorschläge, „Heute“)
+    journal/       Modul "Reisetagebuch" (Einträge, Fotos, Highlights)
     activity/      Modul "Unternehmungen"
-  services/        weather.ts (Open-Meteo), openingHours.ts (Öffnungszeiten-Parser)
+  services/        weather.ts (Open-Meteo), openingHours.ts (Öffnungszeiten-Parser), images.ts (Fotos verkleinern)
 docs/
   ARCHITEKTUR.md   Regeln und Aufbau
   MODUL-VORLAGE.md So entsteht ein neues Modul
@@ -83,7 +84,7 @@ docs/
 | M1 Planung | Reiseprojekt, Anreise, Unterkünfte, Unternehmungen, Budgetvergleich | erledigt |
 | M2 Vorbereitung | Packliste, Reiseapotheke, Dokumente & Notfall | erledigt |
 | M3 Unterwegs | Tagesplaner ✔ (Wetter, Öffnungszeiten), Karte offline | in Arbeit |
-| M4 Tagebuch | Tageseinträge, Fotos, Orte, Ausgaben | offen |
+| M4 Tagebuch | Tageseinträge ✔, Fotos ✔, Highlights ✔, Ausgaben | in Arbeit |
 | M5 Webseite | Templates, Highlights, statischer Export | offen |
 | M6 Ausbau | Sync, Mitreisende, App Stores, Spenden-Dienste | offen |
 

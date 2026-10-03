@@ -1,7 +1,22 @@
 import { db } from './db'
 
 /** Alle Tabellen, die ins Backup gehören. Neue Tabellen hier ergänzen. */
-export const BACKUP_TABLES = ['trips', 'accommodations', 'activities', 'travelLegs', 'packingItems', 'medications', 'vaccinations', 'documents', 'emergencyContacts'] as const
+export const BACKUP_TABLES = [
+  'trips',
+  'accommodations',
+  'activities',
+  'travelLegs',
+  'packingItems',
+  'medications',
+  'vaccinations',
+  'documents',
+  'emergencyContacts',
+  'journalEntries',
+  'photos'
+] as const
+
+/** Tabellen mit großen Binärdaten – im Backup optional. */
+export const LARGE_TABLES: readonly string[] = ['photos']
 
 export interface BackupFile {
   app: 'nix-wie-weg'
@@ -10,11 +25,57 @@ export interface BackupFile {
   tables: Record<string, unknown[]>
 }
 
-/** Exportiert alle Daten als JSON-Objekt (Sicherung, Gerätewechsel). */
-export async function exportBackup(): Promise<BackupFile> {
+/** Platzhalter für eine Binärdatei (Foto) im JSON. */
+interface EncodedBlob {
+  __blob: string
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader()
+    r.onload = () => resolve(String(r.result))
+    r.onerror = () => reject(r.error)
+    r.readAsDataURL(blob)
+  })
+}
+
+/** data:-URL → Blob, ohne Netzwerk (funktioniert offline). */
+export function dataUrlToBlob(dataUrl: string): Blob {
+  const [head, data] = dataUrl.split(',', 2)
+  const type = head.match(/^data:([^;]+)/)?.[1] ?? 'application/octet-stream'
+  if (head.includes(';base64')) {
+    const bin = atob(data)
+    const bytes = new Uint8Array(bin.length)
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+    return new Blob([bytes], { type })
+  }
+  return new Blob([decodeURIComponent(data)], { type })
+}
+
+/** Ersetzt Blob-Felder (oberste Ebene) durch eingebettete data:-URLs. */
+async function encodeRow(row: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const out: Record<string, unknown> = { ...row }
+  for (const [k, v] of Object.entries(row)) {
+    if (v instanceof Blob) out[k] = { __blob: await blobToDataUrl(v) } satisfies EncodedBlob
+  }
+  return out
+}
+
+function decodeRow(row: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...row }
+  for (const [k, v] of Object.entries(row)) {
+    if (v && typeof v === 'object' && typeof (v as EncodedBlob).__blob === 'string') out[k] = dataUrlToBlob((v as EncodedBlob).__blob)
+  }
+  return out
+}
+
+/** Exportiert alle Daten als JSON-Objekt (Sicherung, Gerätewechsel). Fotos nur auf Wunsch. */
+export async function exportBackup(options: { includeLarge?: boolean } = {}): Promise<BackupFile> {
   const tables: Record<string, unknown[]> = {}
   for (const name of BACKUP_TABLES) {
-    tables[name] = await db.table(name).toArray()
+    if (!options.includeLarge && LARGE_TABLES.includes(name)) continue
+    const rows = (await db.table(name).toArray()) as Record<string, unknown>[]
+    tables[name] = await Promise.all(rows.map(encodeRow))
   }
   return { app: 'nix-wie-weg', format: 1, exportedAt: new Date().toISOString(), tables }
 }
@@ -24,10 +85,16 @@ export async function importBackup(file: BackupFile): Promise<number> {
   if (file.app !== 'nix-wie-weg' || file.format !== 1) {
     throw new Error('Unbekanntes Backup-Format.')
   }
+  // Umwandeln vor der Transaktion (innerhalb dürfen nur Datenbank-Aufrufe warten)
+  const decoded = new Map<string, unknown[]>()
+  for (const name of BACKUP_TABLES) {
+    const rows = (file.tables[name] ?? []) as Record<string, unknown>[]
+    decoded.set(name, rows.map(decodeRow))
+  }
   let count = 0
   await db.transaction('rw', BACKUP_TABLES.map((t) => db.table(t)), async () => {
     for (const name of BACKUP_TABLES) {
-      const rows = file.tables[name] ?? []
+      const rows = decoded.get(name) ?? []
       await db.table(name).bulkPut(rows)
       count += rows.length
     }
@@ -37,11 +104,11 @@ export async function importBackup(file: BackupFile): Promise<number> {
 
 /** Startet im Browser den Download einer JSON-Datei. */
 export function downloadJson(data: unknown, filename: string): void {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+  const blob = new Blob([JSON.stringify(data)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
   a.download = filename
   a.click()
-  URL.revokeObjectURL(url)
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }

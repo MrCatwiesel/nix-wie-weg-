@@ -7,6 +7,7 @@ import { packingModule } from './packing'
 import { medsModule } from './meds'
 import { documentsModule } from './documents'
 import { dayplannerModule } from './dayplanner'
+import { journalModule } from './journal'
 
 /**
  * Liste der aktiven Module. Ein neues Modul:
@@ -22,4 +23,5 @@ export function registerAllModules(): void {
   registerModule(medsModule)
   registerModule(documentsModule)
   registerModule(dayplannerModule)
+  registerModule(journalModule)
 }

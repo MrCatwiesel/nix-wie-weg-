@@ -1,5 +1,20 @@
 # Änderungsprotokoll
 
+## 0.9.0 – 2026-10-04
+
+### Neu
+- Modul „Reisetagebuch“ (M4):
+  - Einträge pro Tag mit Überschrift, Ort, Stimmung und Text; Zeitleiste über alle Reisetage, leere Tage mit „Eintrag schreiben“
+  - Fotos aus Kamera oder Mediathek, mehrere auf einmal; werden auf max. 2048 px verkleinert (Hochformat wird richtig gedreht), mit Vorschaubild
+  - Bildunterschriften, Reihenfolge ändern, erstes Foto = Titelbild
+  - Vollbildansicht mit Wischen und Pfeiltasten
+  - Highlights per Stern – Grundlage für die Reise-Webseite (M5)
+- Einstellungen: Backup wahlweise mit Fotos; Speicheranzeige und „Dauerhaft speichern“ (schützt vor automatischem Löschen durch Safari)
+
+### Geändert
+- Datenbank-Version 9 (neue Tabellen `journalEntries`, `photos`)
+- Backup kann Binärdaten (Fotos) einbetten
+
 ## 0.8.0 – 2026-10-04
 
 ### Neu
