@@ -1,5 +1,21 @@
 # Änderungsprotokoll
 
+## 0.8.0 – 2026-10-04
+
+### Neu
+- Modul „Tagesplaner“ (M3):
+  - Tagesleiste über die ganze Reise mit Wetter-Symbol, Temperatur und Anzahl geplanter Unternehmungen
+  - Wettervorhersage über Open-Meteo (bis 16 Tage), Ort per Suche; wird gespeichert und ist offline sichtbar, automatische Aktualisierung nach 3 Stunden
+  - Vorschläge je Tag aus den offenen Ideen: Priorität, Wetter (Regen → drinnen, Sonne → draußen), Öffnungszeiten, Tagesauslastung
+  - Warnungen: Regen bei geplanter Draußen-Aktivität (mit Drinnen-Alternative zum Tauschen), an dem Tag geschlossen, über 8 Stunden Programm, Hitze
+  - Einplanen, verschieben auf anderen Tag, zurück zu den Ideen, abhaken
+- Neuer Menüpunkt „Heute“: springt direkt in den Tag der laufenden Reise
+- Öffnungszeiten werden aus Freitext erkannt (z. B. „Di–So 10–18“, „Mo-Fr 9-12, 14-18; Sa 10-14“, „täglich“, „24/7“, OSM-Format)
+
+### Geändert
+- Datenbank-Version 8 (Tabelle `weather` als Zwischenspeicher)
+- Unternehmungen haben eine öffentliche Schnittstelle (`activity/public.ts`)
+
 ## 0.7.0 – 2026-10-03
 
 ### Neu

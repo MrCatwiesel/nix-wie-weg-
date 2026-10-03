@@ -6,7 +6,7 @@
 2. **Module kennen einander nicht.** Jedes Modul meldet sich über `core/registry.ts` an und nutzt nur den Kern. Verknüpfung läuft über IDs (z. B. `tripId`).
 3. **Daten nur über Repositories.** Views greifen nie direkt auf `db` zu, sondern auf `<modul>/repository.ts`.
 4. **Logik ohne Oberfläche.** Berechnungen und Prüfungen stehen in `<modul>/logic.ts` als reine Funktionen und haben Tests.
-5. **Das Reiseprojekt ist die gemeinsame Basis.** Andere Module dürfen nur `modules/trip/public.ts` importieren (Reise lesen, Kopfzeile `TripContextHeader`) – nie andere Dateien aus `trip/` und nie andere Module.
+5. **Öffentliche Schnittstellen.** Module importieren voneinander nur die Datei `public.ts` (z. B. `trip/public.ts`, `activity/public.ts`), nie deren innere Dateien. Abhängigkeiten nur in eine Richtung: Basis-Module (Reise, Unternehmungen) kennen die Aufbau-Module (Tagesplaner) nicht.
 6. **Andocken an die Reise-Seite** über `tripSection` (Titel, Link, Zusammenfassung, geplante Kosten) und Aufräumen über `onTripDelete` in der Modul-Definition.
 7. **Bootstrap nicht verändern.** Anpassungen nur über CSS-Variablen in `src/ui/theme.css`.
 
@@ -16,7 +16,7 @@
 Module (trip, packing, meds, dayplanner, journal, website …)
    │  nutzen nur
    ▼
-Kern  (db.ts · registry.ts · router.ts · backup.ts · composables.ts)
+Kern  (db.ts · registry.ts · router.ts · backup.ts · composables.ts · dates.ts · format.ts)
    │
    ├── Offline: Service Worker (App, Kartenkacheln, letztes Wetter)
    └── Online-Dienste über src/services/ (Open-Meteo, OpenStreetMap, OpenRouteService)

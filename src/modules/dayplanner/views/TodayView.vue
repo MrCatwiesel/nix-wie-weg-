@@ -1,0 +1,49 @@
+<script setup lang="ts">
+import { computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useLiveQuery } from '@/core/composables'
+import { diffDays, todayIso } from '@/core/dates'
+import { formatDate } from '@/core/format'
+import { tripRepository, type Trip } from '@/modules/trip/public'
+
+/**
+ * "Heute": springt direkt in den Tagesplan der laufenden Reise.
+ * Läuft keine Reise, zeigt sie die nächste an.
+ */
+const router = useRouter()
+const trips = useLiveQuery(() => tripRepository.listAll(), null as Trip[] | null)
+const today = todayIso()
+
+const running = computed(() => (trips.value ?? []).find((t) => t.startDate <= today && today <= t.endDate))
+const next = computed(() =>
+  (trips.value ?? []).filter((t) => t.startDate > today).sort((a, b) => a.startDate.localeCompare(b.startDate))[0]
+)
+
+watch(running, (t) => {
+  if (t) router.replace({ path: `/trip/${t.id}/tagesplan`, query: { tag: today } })
+}, { immediate: true })
+</script>
+
+<template>
+  <div class="text-center py-5">
+    <template v-if="trips === null || running">
+      <span class="spinner-border text-primary" aria-hidden="true"></span>
+    </template>
+    <template v-else-if="next">
+      <i class="bi bi-hourglass-split display-4 text-primary d-block mb-3" aria-hidden="true"></i>
+      <p class="mb-1">Gerade läuft keine Reise.</p>
+      <p class="text-body-secondary">
+        Nächste Reise: <strong>{{ next.title }}</strong> in {{ diffDays(today, next.startDate) }} Tagen ({{ formatDate(next.startDate) }}).
+      </p>
+      <div class="d-flex gap-2 justify-content-center flex-wrap">
+        <RouterLink :to="`/trip/${next.id}/tagesplan`" class="btn btn-primary">Tage schon planen</RouterLink>
+        <RouterLink :to="`/trip/${next.id}`" class="btn btn-outline-secondary">Zur Reise</RouterLink>
+      </div>
+    </template>
+    <template v-else>
+      <i class="bi bi-sun display-4 text-primary d-block mb-3" aria-hidden="true"></i>
+      <p class="text-body-secondary">Keine laufende oder geplante Reise.</p>
+      <RouterLink to="/trip/neu" class="btn btn-primary">Reise planen</RouterLink>
+    </template>
+  </div>
+</template>

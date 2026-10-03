@@ -21,6 +21,19 @@ export const activityRepository = {
     await db.activities.update(id, { ...draft, updatedAt: now() })
   },
 
+  /**
+   * Auf einen Tag legen (oder mit leerem Datum wieder herausnehmen).
+   * Ideen werden dabei zu "geplant", herausgenommene Pläne wieder zu "Idee"; Erledigtes bleibt erledigt.
+   */
+  async setPlannedDate(id: string, plannedDate: string): Promise<void> {
+    const a = await db.activities.get(id)
+    if (!a) return
+    let status: ActivityStatus = a.status
+    if (plannedDate && (a.status === 'idee' || a.status === 'verworfen')) status = 'geplant'
+    if (!plannedDate && a.status === 'geplant') status = 'idee'
+    await db.activities.update(id, { plannedDate, status, updatedAt: now() })
+  },
+
   async setStatus(id: string, status: ActivityStatus): Promise<void> {
     await db.activities.update(id, { status, updatedAt: now() })
   },

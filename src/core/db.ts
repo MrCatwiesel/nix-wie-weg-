@@ -6,6 +6,7 @@ import type { TravelLeg } from '@/modules/travel/types'
 import type { PackingItem } from '@/modules/packing/types'
 import type { Medication, Vaccination } from '@/modules/meds/types'
 import type { EmergencyContact, TravelDocument } from '@/modules/documents/types'
+import type { WeatherCache } from '@/modules/dayplanner/types'
 
 /**
  * Lokale Datenbank (IndexedDB) – die einzige Stelle, an der das Schema steht.
@@ -26,6 +27,7 @@ export class NixDb extends Dexie {
   vaccinations!: Table<Vaccination, string>
   documents!: Table<TravelDocument, string>
   emergencyContacts!: Table<EmergencyContact, string>
+  weather!: Table<WeatherCache, string>
 
   constructor() {
     super('nix-wie-weg')
@@ -75,7 +77,12 @@ export class NixDb extends Dexie {
           })
       )
 
-    // Nächste Änderung: this.version(8).stores({ … })
+    // v8: Tagesplaner – zuletzt geladene Wettervorhersage je Reise (nicht im Backup, wird neu geladen)
+    this.version(8).stores({
+      weather: 'tripId'
+    })
+
+    // Nächste Änderung: this.version(9).stores({ … })
   }
 }
 
