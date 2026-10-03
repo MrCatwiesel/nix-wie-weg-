@@ -1,5 +1,18 @@
 # Änderungsprotokoll
 
+## 0.3.0 – 2026-10-03
+
+### Neu
+- Modul „An- und Rückreise“: Etappen mit Auto, Bahn, Flug, Bus, Fähre, Fahrrad; Fahrzeit (auch über Mitternacht), Kilometer, Kosten je Richtung
+- Auto: Spritkosten-Rechner (Verbrauch × Preis) plus Maut/Vignette; Pausenempfehlung alle 2 Stunden
+- Hinweis auf Lücken zwischen Etappen; Reihenfolge per Pfeil änderbar; Rückreise mit einem Klick aus der Hinreise erzeugen
+- Route direkt in Apple Karten oder Google Maps öffnen
+- Neue Etappen werden vorbelegt (Start = letztes Ziel, Datum, Verkehrsmittel, Verbrauch)
+- Budgetvergleich enthält jetzt auch die Anreisekosten
+
+### Geändert
+- Datenbank-Version 3 (neue Tabelle `travelLegs`), Backup enthält sie
+
 ## 0.2.1 – 2026-10-03
 
 ### Geändert

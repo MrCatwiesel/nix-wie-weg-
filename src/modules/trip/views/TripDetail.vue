@@ -131,7 +131,7 @@ async function remove() {
           <div class="progress-bar" :class="budgetCheck.over ? 'bg-danger' : budgetCheck.pct > 85 ? 'bg-warning' : 'bg-success'"
                :style="{ width: `${Math.min(100, budgetCheck.pct)}%` }"></div>
         </div>
-        <div class="small text-body-secondary mt-1">Unterkünfte und Unternehmungen in {{ trip.currency }}, ohne Anreise und Verpflegung.</div>
+        <div class="small text-body-secondary mt-1">Anreise, Unterkünfte und Unternehmungen in {{ trip.currency }}, ohne Verpflegung.</div>
       </div>
     </div>
 
