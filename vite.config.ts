@@ -26,7 +26,19 @@ export default defineConfig({
         icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,woff,woff2}']
+        globPatterns: ['**/*.{js,css,html,svg,woff,woff2}'],
+        runtimeCaching: [
+          {
+            // Angesehene Kartenkacheln für unterwegs merken (kein Massen-Download – OSM-Nutzungsregeln)
+            urlPattern: /^https:\/\/tile\.openstreetmap\.org\//,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'osm-kacheln',
+              expiration: { maxEntries: 800, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          }
+        ]
       }
     })
   ],

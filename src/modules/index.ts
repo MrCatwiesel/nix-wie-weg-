@@ -9,6 +9,8 @@ import { documentsModule } from './documents'
 import { dayplannerModule } from './dayplanner'
 import { journalModule } from './journal'
 import { websiteModule } from './website'
+import { expensesModule } from './expenses'
+import { mapModule } from './map'
 
 /**
  * Liste der aktiven Module. Ein neues Modul:
@@ -24,6 +26,8 @@ export function registerAllModules(): void {
   registerModule(medsModule)
   registerModule(documentsModule)
   registerModule(dayplannerModule)
+  registerModule(mapModule)
   registerModule(journalModule)
+  registerModule(expensesModule)
   registerModule(websiteModule)
 }
