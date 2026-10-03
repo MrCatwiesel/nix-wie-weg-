@@ -1,0 +1,52 @@
+/*
+ * App-Theme auf Basis von Bootstrap 5.3.
+ * Farben und Formen nur über CSS-Variablen anpassen – so bleibt ein
+ * Update von Bootstrap problemlos. Dark Mode: data-bs-theme="dark" auf <html>.
+ */
+:root {
+  --bs-primary: #0d6efd;
+  --bs-primary-rgb: 13, 110, 253;
+  --bs-border-radius: 0.75rem;
+  --bs-border-radius-lg: 1rem;
+  --app-bottom-nav-height: 64px;
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Platz für die untere Navigation auf dem Handy */
+@media (max-width: 767.98px) {
+  .app-main {
+    padding-bottom: calc(var(--app-bottom-nav-height) + env(safe-area-inset-bottom) + 1rem) !important;
+  }
+}
+
+.bottom-nav {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 1030;
+  display: flex;
+  height: calc(var(--app-bottom-nav-height) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bottom-nav a {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 0.75rem;
+  color: var(--bs-secondary-color);
+  text-decoration: none;
+}
+
+.bottom-nav a .bi {
+  font-size: 1.35rem;
+}
+
+.bottom-nav a.active {
+  color: var(--bs-primary);
+}
