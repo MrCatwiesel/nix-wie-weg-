@@ -1,0 +1,82 @@
+export type MedKind = 'dauer' | 'bedarf' | 'notfall'
+
+/** Ein Medikament oder Artikel der Reiseapotheke. */
+export interface Medication {
+  id: string
+  tripId: string
+  name: string
+  kind: MedKind
+  /** Für wen; leer = für alle */
+  person: string
+  /** Dosis als Text, z. B. "1 Tablette", "5 ml" */
+  dose: string
+  /** Einheiten pro Einnahme (für die Mengenberechnung), z. B. 1 */
+  unitsPerDose: number | null
+  /** Einnahmezeiten "HH:MM" – nur bei Dauermedikation */
+  times: string[]
+  /** Vorhandene Einheiten (Tabletten, Kapseln …) */
+  stockUnits: number | null
+  /** Haltbar bis (ISO-Datum) oder leer */
+  expiryDate: string
+  prescription: boolean
+  /** Ins Handgepäck */
+  handLuggage: boolean
+  /** Kühlen nötig */
+  cooling: boolean
+  packed: boolean
+  notes: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type MedicationDraft = Omit<Medication, 'id' | 'tripId' | 'createdAt' | 'updatedAt'>
+
+export type VaccinationStatus = 'pruefen' | 'geplant' | 'erledigt'
+
+export interface Vaccination {
+  id: string
+  tripId: string
+  name: string
+  person: string
+  /** Termin oder Datum der letzten Impfung */
+  date: string
+  /** Schutz gültig bis (ISO-Datum) oder leer */
+  validUntil: string
+  status: VaccinationStatus
+  notes: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type VaccinationDraft = Omit<Vaccination, 'id' | 'tripId' | 'createdAt' | 'updatedAt'>
+
+export const KIND: Record<MedKind, { label: string; icon: string; hint: string }> = {
+  dauer: { label: 'Dauermedikation', icon: 'clock-history', hint: 'regelmäßig nach Plan' },
+  bedarf: { label: 'Bei Bedarf', icon: 'bandaid', hint: 'z. B. Schmerzmittel, Pflaster' },
+  notfall: { label: 'Notfall', icon: 'exclamation-octagon', hint: 'z. B. Allergie-Notfallset' }
+}
+
+export const VACC_STATUS: Record<VaccinationStatus, { label: string; badge: string }> = {
+  pruefen: { label: 'Prüfen', badge: 'text-bg-warning' },
+  geplant: { label: 'Termin geplant', badge: 'text-bg-primary' },
+  erledigt: { label: 'Erledigt', badge: 'text-bg-success' }
+}
+
+/**
+ * Übliche Bestandteile einer Reiseapotheke (ohne Dosierungen).
+ * Auswahl und Mittel mit Arzt oder Apotheke abstimmen.
+ */
+export const FIRST_AID_KIT: { name: string; kind: MedKind }[] = [
+  { name: 'Schmerz- und Fiebermittel', kind: 'bedarf' },
+  { name: 'Mittel gegen Durchfall', kind: 'bedarf' },
+  { name: 'Mittel gegen Reiseübelkeit', kind: 'bedarf' },
+  { name: 'Allergiemittel', kind: 'bedarf' },
+  { name: 'Wund- und Desinfektionsspray', kind: 'bedarf' },
+  { name: 'Pflaster & Blasenpflaster', kind: 'bedarf' },
+  { name: 'Verbandszeug & Mullbinde', kind: 'bedarf' },
+  { name: 'Fieberthermometer', kind: 'bedarf' },
+  { name: 'Pinzette / Zeckenzange', kind: 'bedarf' },
+  { name: 'Insektenschutz & Gel gegen Stiche', kind: 'bedarf' },
+  { name: 'Sonnenschutz & After-Sun', kind: 'bedarf' },
+  { name: 'Elektrolyt-Pulver', kind: 'bedarf' }
+]

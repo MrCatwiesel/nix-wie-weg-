@@ -2,7 +2,7 @@
 
 Reise-App von der Planung bis zur Reise-Webseite – offline zuerst, als installierbare Web-App (PWA) für Handy, Tablet und PC.
 
-**Stand 0.4.0:** Planung komplett (M1: **Reiseprojekt**, **An- und Rückreise**, **Unterkünfte**, **Unternehmungen**, Budgetvergleich) und **Packliste** mit Vorlagen (M2).
+**Stand 0.4.0:** Planung komplett (M1: **Reiseprojekt**, **An- und Rückreise**, **Unterkünfte**, **Unternehmungen**, Budgetvergleich) und Vorbereitung mit **Packliste** und **Reiseapotheke** (M2).
 
 **App online:** https://mrcatwiesel.github.io/nix-wie-weg-/
 
@@ -59,6 +59,7 @@ src/
     travel/        Modul "Anreise"
     accommodation/ Modul "Unterkünfte"
     packing/       Modul "Packliste" (templates.ts = Vorlagen)
+    meds/          Modul "Reiseapotheke" (Medikamente, Einnahmeplan, Impfungen)
     activity/      Modul "Unternehmungen"
   services/        (später) Wetter, Karten, Öffnungszeiten, Routen
 docs/
@@ -78,7 +79,7 @@ docs/
 | --- | --- | --- |
 | M0 Fundament | Gerüst, Kern, Datenbank, PWA, Theme | erledigt |
 | M1 Planung | Reiseprojekt, Anreise, Unterkünfte, Unternehmungen, Budgetvergleich | erledigt |
-| M2 Vorbereitung | Packliste ✔, Medikamente, Dokumente | in Arbeit |
+| M2 Vorbereitung | Packliste ✔, Reiseapotheke ✔, Dokumente | in Arbeit |
 | M3 Unterwegs | Tagesplaner mit Wetter, Öffnungszeiten, Karte offline | offen |
 | M4 Tagebuch | Tageseinträge, Fotos, Orte, Ausgaben | offen |
 | M5 Webseite | Templates, Highlights, statischer Export | offen |

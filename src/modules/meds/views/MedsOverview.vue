@@ -1,0 +1,188 @@
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import { useLiveQuery } from '@/core/composables'
+import { diffDays } from '@/core/dates'
+import { formatDate } from '@/core/format'
+import { TripContextHeader, tripRepository, type Trip } from '@/modules/trip/public'
+import { medicationRepository, vaccinationRepository } from '../repository'
+import {
+  DEFAULT_RESERVE_DAYS, dailySchedule, emptyMedicationDraft, expiryStatus, sortMeds, stockStatus, unitsNeeded,
+  vaccinationNeedsAction
+} from '../logic'
+import { FIRST_AID_KIT, KIND, VACC_STATUS, type Medication, type Vaccination } from '../types'
+
+const props = defineProps<{ tripId: string }>()
+
+const trip = useLiveQuery(() => tripRepository.get(props.tripId), undefined as Trip | undefined)
+const meds = useLiveQuery(() => medicationRepository.listByTrip(props.tripId), [] as Medication[])
+const vaccs = useLiveQuery(() => vaccinationRepository.listByTrip(props.tripId), [] as Vaccination[])
+
+type Tab = 'medikamente' | 'plan' | 'impfungen'
+const tab = ref<Tab>('medikamente')
+const planPerson = ref('')
+
+const days = computed(() => (trip.value ? diffDays(trip.value.startDate, trip.value.endDate) + 1 : 1))
+const sorted = computed(() => sortMeds(meds.value))
+const schedule = computed(() => dailySchedule(meds.value, planPerson.value))
+const people = computed(() => [...new Set(meds.value.map((m) => m.person).filter(Boolean))].sort())
+const missingKit = computed(() => {
+  const have = new Set(meds.value.map((m) => m.name.toLowerCase()))
+  return FIRST_AID_KIT.filter((k) => !have.has(k.name.toLowerCase()))
+})
+
+const expiryLabel = {
+  abgelaufen: { text: 'abgelaufen', cls: 'text-danger' },
+  waehrend: { text: 'läuft während der Reise ab', cls: 'text-warning-emphasis' }
+} as const
+
+function expiry(m: Medication) {
+  if (!trip.value) return null
+  const s = expiryStatus(m.expiryDate, trip.value.endDate)
+  return s === 'abgelaufen' || s === 'waehrend' ? expiryLabel[s] : null
+}
+
+function togglePacked(m: Medication) {
+  medicationRepository.setPacked(m.id, !m.packed)
+}
+
+async function addKit() {
+  if (!missingKit.value.length) return
+  await medicationRepository.createMany(
+    props.tripId,
+    missingKit.value.map((k) => emptyMedicationDraft({ name: k.name, kind: k.kind, times: [], unitsPerDose: null, handLuggage: false }))
+  )
+}
+</script>
+
+<template>
+  <TripContextHeader :trip-id="tripId" title="Reiseapotheke" />
+
+  <ul class="nav nav-pills mb-3">
+    <li class="nav-item"><button class="nav-link" :class="{ active: tab === 'medikamente' }" @click="tab = 'medikamente'">Medikamente</button></li>
+    <li class="nav-item"><button class="nav-link" :class="{ active: tab === 'plan' }" @click="tab = 'plan'">Einnahmeplan</button></li>
+    <li class="nav-item">
+      <button class="nav-link" :class="{ active: tab === 'impfungen' }" @click="tab = 'impfungen'">
+        Impfungen
+        <span v-if="trip && vaccs.some((v) => vaccinationNeedsAction(v, trip!.endDate))" class="badge text-bg-warning ms-1">!</span>
+      </button>
+    </li>
+  </ul>
+
+  <!-- Medikamente -->
+  <template v-if="tab === 'medikamente'">
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      <RouterLink :to="`/trip/${tripId}/apotheke/medikament/neu`" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Medikament
+      </RouterLink>
+      <button v-if="missingKit.length" type="button" class="btn btn-outline-primary" @click="addKit">
+        <i class="bi bi-bag-plus me-1" aria-hidden="true"></i>Grundausstattung ({{ missingKit.length }})
+      </button>
+    </div>
+
+    <p v-if="sorted.length === 0" class="text-body-secondary">
+      Trage Dauermedikamente mit Einnahmezeiten ein – die App rechnet aus, wie viel du für
+      {{ days }} Tage plus {{ DEFAULT_RESERVE_DAYS }} Tage Reserve brauchst.
+    </p>
+
+    <ul class="list-group mb-3">
+      <li v-for="m in sorted" :key="m.id" class="list-group-item d-flex gap-2 align-items-start position-relative"
+          :class="{ 'text-body-secondary': m.packed }">
+        <input :id="`m-${m.id}`" class="form-check-input mt-1 flex-none position-relative z-2" type="checkbox"
+               :checked="m.packed" :aria-label="`${m.name} eingepackt`" @change="togglePacked(m)" />
+        <div class="flex-grow-1 min-w-0">
+          <RouterLink :to="`/trip/${tripId}/apotheke/medikament/${m.id}`"
+                      class="fw-semibold text-body text-decoration-none stretched-link"
+                      :class="{ 'text-decoration-line-through': m.packed }">{{ m.name }}</RouterLink>
+          <span v-if="m.person" class="badge text-bg-light border ms-1">{{ m.person }}</span>
+          <div class="small text-body-secondary">
+            <i :class="`bi bi-${KIND[m.kind].icon} me-1`" aria-hidden="true"></i>{{ KIND[m.kind].label }}
+            <template v-if="m.kind === 'dauer' && m.times.length"> · {{ m.dose || '' }} um {{ m.times.join(', ') }}</template>
+          </div>
+          <div v-if="unitsNeeded(m, days) !== null" class="small">
+            Bedarf: {{ unitsNeeded(m, days) }} Stück
+            <template v-if="stockStatus(m, days).state === 'ok'">
+              <span class="text-success"><i class="bi bi-check-circle ms-1" aria-hidden="true"></i> reicht</span>
+            </template>
+            <template v-else-if="stockStatus(m, days).state === 'knapp'">
+              <span class="text-danger"><i class="bi bi-exclamation-circle ms-1" aria-hidden="true"></i> {{ stockStatus(m, days).missing }} fehlen</span>
+            </template>
+            <span v-else class="text-body-secondary"> · Vorrat nicht angegeben</span>
+          </div>
+          <div v-if="expiry(m)" class="small" :class="expiry(m)!.cls">
+            <i class="bi bi-calendar-x me-1" aria-hidden="true"></i>{{ expiry(m)!.text }} ({{ formatDate(m.expiryDate) }})
+          </div>
+          <div class="d-flex flex-wrap gap-1 mt-1">
+            <span v-if="m.prescription" class="badge text-bg-info">Rezept</span>
+            <span v-if="m.handLuggage" class="badge text-bg-light border">Handgepäck</span>
+            <span v-if="m.cooling" class="badge text-bg-primary">kühlen</span>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </template>
+
+  <!-- Einnahmeplan -->
+  <template v-else-if="tab === 'plan'">
+    <select v-if="people.length" v-model="planPerson" class="form-select form-select-sm w-auto mb-3" aria-label="Person">
+      <option value="">Alle Personen</option>
+      <option v-for="p in people" :key="p" :value="p">{{ p }}</option>
+    </select>
+    <p v-if="schedule.length === 0" class="text-body-secondary">Keine Dauermedikation mit Einnahmezeiten eingetragen.</p>
+    <ul v-else class="list-group mb-3">
+      <li v-for="(e, idx) in schedule" :key="idx" class="list-group-item d-flex gap-3 align-items-center">
+        <span class="fw-semibold font-monospace">{{ e.time }}</span>
+        <span class="flex-grow-1">
+          {{ e.medication.name }}<span v-if="e.medication.dose" class="text-body-secondary"> – {{ e.medication.dose }}</span>
+        </span>
+        <span v-if="e.medication.person" class="badge text-bg-light border">{{ e.medication.person }}</span>
+      </li>
+    </ul>
+    <p class="small text-body-secondary">
+      <i class="bi bi-globe me-1" aria-hidden="true"></i>
+      Bei Zeitverschiebung die Einnahmezeiten mit Arzt oder Apotheke abstimmen.
+    </p>
+  </template>
+
+  <!-- Impfungen -->
+  <template v-else>
+    <RouterLink :to="`/trip/${tripId}/apotheke/impfung/neu`" class="btn btn-primary mb-3">
+      <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Impfung
+    </RouterLink>
+    <p v-if="vaccs.length === 0" class="text-body-secondary">
+      Prüfe rechtzeitig (am besten 6–8 Wochen vorher) mit Hausarzt oder reisemedizinischer Beratung, welche Impfungen für dein Ziel empfohlen sind.
+    </p>
+    <div class="vstack gap-2 mb-3">
+      <div v-for="v in vaccs" :key="v.id" class="card position-relative">
+        <div class="card-body py-2">
+          <div class="d-flex justify-content-between gap-2">
+            <RouterLink :to="`/trip/${tripId}/apotheke/impfung/${v.id}`" class="fw-semibold text-body text-decoration-none stretched-link">
+              {{ v.name }}
+            </RouterLink>
+            <span class="badge" :class="VACC_STATUS[v.status].badge">{{ VACC_STATUS[v.status].label }}</span>
+          </div>
+          <div class="small text-body-secondary">
+            <template v-if="v.person">{{ v.person }} · </template>
+            <template v-if="v.date">{{ v.status === 'erledigt' ? 'geimpft' : 'Termin' }} {{ formatDate(v.date) }}</template>
+            <template v-if="v.validUntil"> · gültig bis {{ formatDate(v.validUntil) }}</template>
+          </div>
+          <div v-if="trip && v.status === 'erledigt' && vaccinationNeedsAction(v, trip.endDate)" class="small text-warning-emphasis">
+            <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>Schutz endet vor Reiseende – Auffrischung prüfen
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <p class="small text-body-secondary border-top pt-2">
+    Die Reiseapotheke hilft beim Organisieren und ersetzt keine ärztliche oder pharmazeutische Beratung.
+  </p>
+</template>
+
+<style scoped>
+.flex-none {
+  flex: none;
+}
+.min-w-0 {
+  min-width: 0;
+}
+</style>

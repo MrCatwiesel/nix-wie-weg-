@@ -1,7 +1,7 @@
 import { db } from './db'
 
 /** Alle Tabellen, die ins Backup gehören. Neue Tabellen hier ergänzen. */
-export const BACKUP_TABLES = ['trips', 'accommodations', 'activities', 'travelLegs', 'packingItems'] as const
+export const BACKUP_TABLES = ['trips', 'accommodations', 'activities', 'travelLegs', 'packingItems', 'medications', 'vaccinations'] as const
 
 export interface BackupFile {
   app: 'nix-wie-weg'

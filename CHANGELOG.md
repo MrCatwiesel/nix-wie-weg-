@@ -1,5 +1,17 @@
 # Änderungsprotokoll
 
+## 0.5.0 – 2026-10-03
+
+### Neu
+- Modul „Reiseapotheke“ mit drei Bereichen:
+  - Medikamente: Dauermedikation, bei Bedarf, Notfall; Bedarf für Reisetage plus 3 Tage Reserve, Vorratsprüfung, Warnung bei Ablauf vor oder während der Reise; Rezept, Handgepäck, Kühlen; abhaken beim Packen
+  - Einnahmeplan: alle Einnahmen eines Tages nach Uhrzeit, filterbar nach Person
+  - Impfungen: Status Prüfen/Termin/Erledigt, Hinweis wenn Schutz vor Reiseende endet
+- Grundausstattung Reiseapotheke mit einem Klick (ohne Dosierungen)
+
+### Geändert
+- Datenbank-Version 5 (neue Tabellen `medications`, `vaccinations`), Backup enthält sie
+
 ## 0.4.0 – 2026-10-03
 
 ### Neu
