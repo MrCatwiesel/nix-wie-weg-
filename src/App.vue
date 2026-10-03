@@ -3,6 +3,7 @@ import { getNavItems } from '@/core/registry'
 import { useOnline } from '@/core/composables'
 
 const navItems = getNavItems()
+const baseUrl = import.meta.env.BASE_URL
 const online = useOnline()
 </script>
 
@@ -10,7 +11,7 @@ const online = useOnline()
   <header class="navbar navbar-expand bg-body border-bottom sticky-top">
     <div class="container">
       <RouterLink to="/" class="navbar-brand fw-semibold d-flex align-items-center gap-2">
-        <img src="/icon.svg" alt="" width="28" height="28" />Nix wie weg
+        <img :src="`${baseUrl}icon.svg`" alt="" width="28" height="28" />Nix wie weg
       </RouterLink>
       <ul class="navbar-nav ms-auto d-none d-md-flex">
         <li v-for="item in navItems" :key="item.id" class="nav-item">

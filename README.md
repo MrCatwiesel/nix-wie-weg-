@@ -17,6 +17,24 @@ npm run build    # fertige App in dist/ (statisch hostbar, z. B. GitHub Pages)
 
 Auf dem Handy testen: `npm run dev -- --host` und die angezeigte Netzwerk-Adresse im Handy-Browser öffnen (gleiches WLAN). Offline und „Zum Startbildschirm hinzufügen“ funktionieren im Build (`npm run build && npm run preview -- --host`).
 
+## Auf dem iPad oder einem einfachen Webserver
+
+Die App braucht **keinen Datenbank-Server**: alle Daten liegen im Browser (IndexedDB). Der Server liefert nur die fertigen Dateien aus dem Ordner `dist/` aus.
+
+**Weg A – ganz ohne Computer (GitHub):**
+1. Auf github.com ein neues Repository anlegen und den Projektinhalt hochladen („Add file → Upload files“).
+2. Settings → Pages → Source: **GitHub Actions** wählen.
+3. Unter „Actions“ baut GitHub die App automatisch. Danach:
+   - online nutzbar unter `https://<name>.github.io/<repository>/`, oder
+   - im Lauf unter „Artifacts“ **nix-wie-weg-app** herunterladen, entpacken und den Inhalt in den Ordner des Tiny-Servers kopieren.
+
+**Weg B – mit einem Computer:** `npm install && npm run build`, dann den Inhalt von `dist/` auf das iPad in den Server-Ordner kopieren.
+
+Wichtig:
+- Öffnen in Safari auf demselben iPad über `http://localhost:<port>/` (nicht über die IP-Adresse) – nur dann funktionieren Offline-Modus und „Zum Home-Bildschirm“.
+- Die Daten gehören zur Adresse: unter einer anderen Adresse oder einem anderen Port beginnt die App leer. Umzug über Einstellungen → Backup.
+- Die Datei `index.html` direkt aus der Dateien-App zu öffnen funktioniert nicht; es braucht den Webserver.
+
 ## Technik
 
 | Baustein | Wahl |

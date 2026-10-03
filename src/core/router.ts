@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
 import { getModules } from './registry'
 
 /** Baut den Router aus den Routen aller registrierten Module. */
@@ -10,7 +10,9 @@ export function buildRouter() {
     { path: '/:pathMatch(.*)*', redirect: '/' }
   ]
   return createRouter({
-    history: createWebHistory(),
+    // Hash-Routing (#/trip): läuft auf jedem einfachen Webserver und in jedem Unterordner,
+    // ohne Server-Konfiguration für Neuladen oder Direktlinks.
+    history: createWebHashHistory(),
     routes,
     scrollBehavior: () => ({ top: 0 })
   })

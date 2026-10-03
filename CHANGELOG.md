@@ -1,5 +1,12 @@
 # Änderungsprotokoll
 
+## 0.2.1 – 2026-10-03
+
+### Geändert
+- Läuft auf jedem einfachen Webserver und in jedem Unterordner (relative Pfade, Hash-Routing `#/trip`)
+- GitHub Actions: automatischer Test, Build und Veröffentlichung auf GitHub Pages, fertige App als ZIP-Download
+- Anleitung für iPad / Tiny-Server im README
+
 ## 0.2.0 – 2026-10-03
 
 ### Neu
