@@ -3,6 +3,7 @@ import { tripModule } from './trip'
 import { accommodationModule } from './accommodation'
 import { activityModule } from './activity'
 import { travelModule } from './travel'
+import { packingModule } from './packing'
 
 /**
  * Liste der aktiven Module. Ein neues Modul:
@@ -14,6 +15,6 @@ export function registerAllModules(): void {
   registerModule(travelModule)
   registerModule(accommodationModule)
   registerModule(activityModule)
-  // registerModule(packingModule)    // M2
+  registerModule(packingModule)
   // registerModule(medsModule)       // M2
 }

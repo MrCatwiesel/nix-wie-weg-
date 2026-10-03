@@ -1,0 +1,119 @@
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { diffDays } from '@/core/dates'
+import { formatDate } from '@/core/format'
+import { TripContextHeader, tripRepository, type Trip } from '@/modules/trip/public'
+import { packingRepository } from '../repository'
+import { draftsFromOtherTrip, draftsFromTemplates } from '../logic'
+import { TEMPLATES } from '../templates'
+import { CATEGORY, type PackingItem } from '../types'
+
+const props = defineProps<{ tripId: string }>()
+const router = useRouter()
+
+const trip = ref<Trip>()
+const existing = ref<PackingItem[]>([])
+const otherTrips = ref<Trip[]>([])
+const selected = ref(new Set<string>(['basis']))
+const sourceTrip = ref('')
+const sourceItems = ref<PackingItem[]>([])
+const busy = ref(false)
+
+/** Reisedauer in Tagen (inkl. An- und Abreisetag) */
+const days = computed(() => {
+  if (!trip.value) return 1
+  return diffDays(trip.value.startDate, trip.value.endDate) + 1
+})
+
+onMounted(async () => {
+  trip.value = await tripRepository.get(props.tripId)
+  if (!trip.value) return router.replace('/trip')
+  existing.value = await packingRepository.listByTrip(props.tripId)
+  // Passende Vorlage zur Anreiseart vorschlagen
+  if (trip.value.transport === 'auto') selected.value.add('auto')
+  if (trip.value.transport === 'flug') selected.value.add('flug')
+  otherTrips.value = (await tripRepository.listAll()).filter((t) => t.id !== props.tripId)
+})
+
+function toggle(id: string) {
+  const s = new Set(selected.value)
+  if (s.has(id)) s.delete(id)
+  else s.add(id)
+  selected.value = s
+}
+
+const preview = computed(() =>
+  draftsFromTemplates(TEMPLATES.filter((t) => selected.value.has(t.id)), days.value, trip.value?.travelers ?? 1, existing.value)
+)
+const previewByCategory = computed(() => {
+  const m = new Map<string, number>()
+  for (const d of preview.value) m.set(CATEGORY[d.category].label, (m.get(CATEGORY[d.category].label) ?? 0) + 1)
+  return [...m.entries()]
+})
+
+async function addTemplates() {
+  if (!preview.value.length) return
+  busy.value = true
+  await packingRepository.createMany(props.tripId, preview.value)
+  router.push(`/trip/${props.tripId}/packliste`)
+}
+
+async function loadSource() {
+  sourceItems.value = sourceTrip.value ? await packingRepository.listByTrip(sourceTrip.value) : []
+}
+const fromOther = computed(() => draftsFromOtherTrip(sourceItems.value, existing.value))
+
+async function addFromOther() {
+  if (!fromOther.value.length) return
+  busy.value = true
+  await packingRepository.createMany(props.tripId, fromOther.value)
+  router.push(`/trip/${props.tripId}/packliste`)
+}
+</script>
+
+<template>
+  <TripContextHeader :trip-id="tripId" title="Packliste füllen" />
+
+  <section class="mb-4">
+    <h2 class="h5">Vorlagen</h2>
+    <p class="small text-body-secondary">
+      Mengen für {{ days }} {{ days === 1 ? 'Tag' : 'Tage' }} und {{ trip?.travelers ?? 1 }}
+      {{ (trip?.travelers ?? 1) === 1 ? 'Person' : 'Personen' }}. Doppeltes wird zusammengefasst, Vorhandenes übersprungen.
+    </p>
+    <div class="row g-2 mb-3">
+      <div v-for="t in TEMPLATES" :key="t.id" class="col-6 col-md-4">
+        <input :id="`tpl-${t.id}`" type="checkbox" class="btn-check" :checked="selected.has(t.id)" @change="toggle(t.id)" />
+        <label class="btn btn-outline-primary w-100 h-100 text-start p-2" :for="`tpl-${t.id}`">
+          <i :class="`bi bi-${t.icon} me-1`" aria-hidden="true"></i><span class="fw-semibold">{{ t.title }}</span>
+          <span class="d-block small opacity-75">{{ t.description }}</span>
+        </label>
+      </div>
+    </div>
+
+    <div v-if="preview.length" class="small text-body-secondary mb-2">
+      {{ preview.length }} neue Einträge:
+      <span v-for="([label, n], idx) in previewByCategory" :key="label">{{ idx ? ', ' : '' }}{{ n }} {{ label }}</span>
+    </div>
+    <div v-else class="small text-body-secondary mb-2">Keine neuen Einträge – alles schon auf der Liste.</div>
+    <button type="button" class="btn btn-primary" :disabled="busy || !preview.length" @click="addTemplates">
+      <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{{ preview.length }} Einträge hinzufügen
+    </button>
+  </section>
+
+  <section v-if="otherTrips.length" class="mb-4">
+    <h2 class="h5">Von einer anderen Reise übernehmen</h2>
+    <div class="input-group">
+      <select v-model="sourceTrip" class="form-select" aria-label="Reise auswählen" @change="loadSource">
+        <option value="">Reise auswählen …</option>
+        <option v-for="t in otherTrips" :key="t.id" :value="t.id">{{ t.title }} ({{ formatDate(t.startDate) }})</option>
+      </select>
+      <button type="button" class="btn btn-outline-primary" :disabled="busy || !fromOther.length" @click="addFromOther">
+        {{ sourceTrip ? `${fromOther.length} übernehmen` : 'Übernehmen' }}
+      </button>
+    </div>
+    <div v-if="sourceTrip && sourceItems.length === 0" class="form-text">Diese Reise hat keine Packliste.</div>
+  </section>
+
+  <RouterLink :to="`/trip/${tripId}/packliste`" class="btn btn-outline-secondary">Zurück zur Packliste</RouterLink>
+</template>

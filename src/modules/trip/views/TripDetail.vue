@@ -53,7 +53,6 @@ const budgetCheck = computed(() => {
 
 /** Platzhalter für die kommenden Module – zeigt die Roadmap direkt in der App. */
 const upcoming = [
-  { icon: 'backpack', title: 'Packliste', milestone: 'M2' },
   { icon: 'capsule', title: 'Medikamente', milestone: 'M2' },
   { icon: 'cloud-sun', title: 'Tagesplaner', milestone: 'M3' },
   { icon: 'journal-richtext', title: 'Tagebuch', milestone: 'M4' },

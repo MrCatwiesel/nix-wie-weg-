@@ -1,5 +1,18 @@
 # Änderungsprotokoll
 
+## 0.4.0 – 2026-10-03
+
+### Neu
+- Modul „Packliste“: abhaken mit Fortschrittsbalken, Kategorien zum Auf- und Zuklappen, Suche, Filter „nur offene“ und nach Person
+- 9 Vorlagen (Grundausstattung, Strand, Wandern, Stadt, Winter, Camping, Kinder, Auto, Flug); Mengen nach Reisetagen und Personen, Doppeltes wird zusammengefasst
+- Passende Vorlage zur Anreiseart wird vorausgewählt
+- Packliste einer früheren Reise übernehmen
+- Schnelleingabe mit Menge („3x Socken“), wichtige Dinge markieren und Warnung, wenn sie fehlen
+- „Alle Häkchen entfernen“ zum Packen für die Rückreise
+
+### Geändert
+- Datenbank-Version 4 (neue Tabelle `packingItems`), Backup enthält sie
+
 ## 0.3.0 – 2026-10-03
 
 ### Neu

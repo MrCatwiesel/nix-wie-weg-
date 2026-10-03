@@ -3,6 +3,7 @@ import type { Trip } from '@/modules/trip/types'
 import type { Accommodation } from '@/modules/accommodation/types'
 import type { Activity } from '@/modules/activity/types'
 import type { TravelLeg } from '@/modules/travel/types'
+import type { PackingItem } from '@/modules/packing/types'
 
 /**
  * Lokale Datenbank (IndexedDB) – die einzige Stelle, an der das Schema steht.
@@ -18,6 +19,7 @@ export class NixDb extends Dexie {
   accommodations!: Table<Accommodation, string>
   activities!: Table<Activity, string>
   travelLegs!: Table<TravelLeg, string>
+  packingItems!: Table<PackingItem, string>
 
   constructor() {
     super('nix-wie-weg')
@@ -38,10 +40,12 @@ export class NixDb extends Dexie {
       travelLegs: 'id, tripId'
     })
 
-    // Beispiel für später (M2 Packliste):
-    // this.version(4).stores({
-    //   packingItems: 'id, tripId, category, done'
-    // })
+    // v4: Modul "Packliste"
+    this.version(4).stores({
+      packingItems: 'id, tripId'
+    })
+
+    // Nächste Änderung: this.version(5).stores({ … })
   }
 }
 
