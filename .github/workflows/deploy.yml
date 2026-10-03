@@ -26,9 +26,6 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm test
-      # Typprüfung meldet Fehler, stoppt die Veröffentlichung aber nicht
-      - run: npm run typecheck
-        continue-on-error: true
       - run: npm run build
       # Fertige App zusätzlich als ZIP zum Herunterladen (z. B. für den Tiny-Server)
       - uses: actions/upload-artifact@v4
@@ -38,6 +35,17 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
+
+  # Eigener Job: zeigt Typfehler deutlich (rot), blockiert die Veröffentlichung aber nicht
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run typecheck
 
   deploy:
     needs: build
