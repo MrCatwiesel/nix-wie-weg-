@@ -62,6 +62,17 @@ async function persist() {
 
   <div v-if="message" class="alert" :class="`alert-${message.type}`">{{ message.text }}</div>
 
+  <RouterLink to="/abgleich" class="card mb-3 text-decoration-none text-body">
+    <div class="card-body d-flex align-items-center gap-3">
+      <i class="bi bi-cloud-arrow-up-fill fs-3 text-primary" aria-hidden="true"></i>
+      <div class="flex-grow-1">
+        <div class="h5 mb-0">Geräte-Abgleich</div>
+        <div class="small text-body-secondary">Handys, Tablet und PC automatisch auf demselben Stand halten</div>
+      </div>
+      <i class="bi bi-chevron-right text-body-secondary" aria-hidden="true"></i>
+    </div>
+  </RouterLink>
+
   <section class="card mb-3">
     <div class="card-body">
       <h2 class="h5">Datensicherung</h2>

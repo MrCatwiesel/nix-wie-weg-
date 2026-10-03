@@ -7,6 +7,7 @@ import './ui/theme.css'
 import App from './App.vue'
 import { registerAllModules } from './modules'
 import { buildRouter } from './core/router'
+import { startAutoSync } from './core/sync/engine'
 
 // Reihenfolge wichtig: erst Module registrieren, dann Router bauen.
 registerAllModules()
@@ -18,3 +19,6 @@ applyTheme()
 dark.addEventListener('change', applyTheme)
 
 createApp(App).use(buildRouter()).mount('#app')
+
+// Geräte-Abgleich im Hintergrund (nur aktiv, wenn eingerichtet)
+startAutoSync()

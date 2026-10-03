@@ -1,5 +1,20 @@
 # Änderungsprotokoll
 
+## 1.1.0 – 2026-10-04
+
+### Neu
+- **Automatischer Geräte-Abgleich** über einen eigenen Server: alle Geräte (Handys, Tablet, PC) haben dieselben Daten
+  - Einstellungen → Geräte-Abgleich: Server-Adresse und Schlüssel, „Schlüssel erzeugen“, Verbindung testen
+  - Weitere Geräte per **Kopplungs-Link** (AirDrop/Nachricht) verbinden
+  - Abgleich beim Öffnen, nach Änderungen, wenn Internet zurückkommt und alle 5 Minuten; offline wird gesammelt
+  - Neuere Änderung gewinnt, **Löschungen werden übertragen**, Fotos in voller Größe
+  - Statusanzeige oben in der App (Wolke) mit Zahl wartender Änderungen
+- **Abgleich-Server** (`server/`): Node.js ohne Fremdpakete, SQLite, Docker + Caddy (automatisches HTTPS), Anleitung für Mietserver und NAS
+
+### Geändert
+- Datenbank-Version 13 (Tabellen `outbox`, `meta`); Liste der Nutzertabellen zentral in `core/tables.ts`
+- Bildunterschriften und Umsortieren von Etappen setzen jetzt `updatedAt`
+
 ## 1.0.1 – 2026-10-04
 
 ### Geändert

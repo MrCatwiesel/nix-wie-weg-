@@ -33,6 +33,8 @@ export interface Photo {
   /** Aufnahmezeit (soweit bekannt, sonst Zeitpunkt des Hinzufügens) */
   takenAt: string
   createdAt: string
+  /** Zuletzt geändert (z. B. Bildunterschrift) – wichtig für den Abgleich */
+  updatedAt?: string
 }
 
 export const MOODS: { value: number; emoji: string; label: string }[] = [

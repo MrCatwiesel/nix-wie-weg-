@@ -47,7 +47,8 @@ export const travelRepository = {
       if (i < 0 || j < 0 || j >= legs.length) return
       ;[legs[i], legs[j]] = [legs[j], legs[i]]
       // Positionen neu durchnummerieren – repariert auch Lücken
-      await Promise.all(legs.map((l, idx) => db.travelLegs.update(l.id, { position: idx })))
+      const ts = now()
+      await Promise.all(legs.map((l, idx) => (l.position === idx ? undefined : db.travelLegs.update(l.id, { position: idx, updatedAt: ts }))))
     })
   },
 

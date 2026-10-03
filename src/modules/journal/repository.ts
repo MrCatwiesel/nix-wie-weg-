@@ -74,6 +74,6 @@ export const photoRepository = {
     return db.photos.where('tripId').equals(tripId).count()
   },
   async setCaption(id: string, caption: string): Promise<void> {
-    await db.photos.update(id, { caption })
+    await db.photos.update(id, { caption, updatedAt: now() })
   }
 }

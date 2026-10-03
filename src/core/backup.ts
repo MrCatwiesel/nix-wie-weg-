@@ -1,23 +1,9 @@
 import { db } from './db'
 import { decide, emptyStats, type MergeStats } from './merge'
+import { DATA_TABLES } from './tables'
 
-/** Alle Tabellen, die ins Backup gehören. Neue Tabellen hier ergänzen. */
-export const BACKUP_TABLES = [
-  'trips',
-  'accommodations',
-  'activities',
-  'travelLegs',
-  'packingItems',
-  'medications',
-  'vaccinations',
-  'documents',
-  'emergencyContacts',
-  'journalEntries',
-  'websites',
-  'expenses',
-  'places',
-  'photos'
-] as const
+/** Alle Tabellen, die ins Backup gehören – zentral in tables.ts gepflegt. */
+export const BACKUP_TABLES = DATA_TABLES
 
 /** Tabellen mit großen Binärdaten – im Backup optional. */
 export const LARGE_TABLES: readonly string[] = ['photos']

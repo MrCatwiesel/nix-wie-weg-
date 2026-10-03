@@ -1,0 +1,33 @@
+# Abgleich-Server mit automatischem HTTPS (Caddy holt das Zertifikat selbst von Let's Encrypt).
+# Voraussetzungen: Docker, eine (Sub-)Domain, die auf diesen Server zeigt, Ports 80 und 443 offen.
+# Start:  cp .env.example .env  →  .env ausfüllen  →  docker compose up -d
+services:
+  sync:
+    build: .
+    restart: unless-stopped
+    environment:
+      NWW_KEYS: ${NWW_KEYS}
+      NWW_ORIGINS: ${NWW_ORIGINS:-*}
+      NWW_MAX_BLOB_MB: ${NWW_MAX_BLOB_MB:-30}
+    volumes:
+      - sync_data:/data
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      NWW_DOMAIN: ${NWW_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - sync
+
+volumes:
+  sync_data:
+  caddy_data:
+  caddy_config:

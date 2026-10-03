@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { getNavItems } from '@/core/registry'
 import { useOnline } from '@/core/composables'
+import { syncState } from '@/core/sync/engine'
 
 const navItems = getNavItems()
 const baseUrl = import.meta.env.BASE_URL
@@ -13,7 +14,14 @@ const online = useOnline()
       <RouterLink to="/" class="navbar-brand fw-semibold d-flex align-items-center gap-2">
         <img :src="`${baseUrl}icon.svg`" alt="" width="28" height="28" />Nix wie weg
       </RouterLink>
-      <ul class="navbar-nav ms-auto d-none d-md-flex">
+      <!-- Abgleich-Status (nur wenn eingerichtet) -->
+      <RouterLink v-if="syncState.configured" to="/abgleich" class="sync-badge ms-auto me-md-3 text-decoration-none"
+                  :title="syncState.lastError || (syncState.pending ? `${syncState.pending} Änderungen warten` : 'Abgeglichen')"
+                  aria-label="Geräte-Abgleich">
+        <i class="bi" :class="syncState.running ? 'bi-arrow-repeat text-primary spin' : syncState.lastError ? 'bi-cloud-slash text-warning' : syncState.pending ? 'bi-cloud-arrow-up text-body-secondary' : 'bi-cloud-check text-success'" aria-hidden="true"></i>
+        <span v-if="syncState.pending && !syncState.running" class="badge rounded-pill text-bg-secondary">{{ syncState.pending }}</span>
+      </RouterLink>
+      <ul class="navbar-nav d-none d-md-flex" :class="{ 'ms-auto': !syncState.configured }">
         <li v-for="item in navItems" :key="item.id" class="nav-item">
           <RouterLink :to="item.to" class="nav-link" active-class="active">
             <i :class="`bi bi-${item.icon} me-1`" aria-hidden="true"></i>{{ item.title }}
@@ -46,3 +54,26 @@ const online = useOnline()
     </RouterLink>
   </nav>
 </template>
+
+<style scoped>
+.sync-badge {
+  font-size: 1.35rem;
+  position: relative;
+  line-height: 1;
+}
+.sync-badge .badge {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.7rem;
+  font-size: 0.6rem;
+}
+.spin {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>

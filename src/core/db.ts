@@ -1,4 +1,6 @@
 import Dexie, { type Table } from 'dexie'
+import { DATA_TABLES } from './tables'
+import { changeTracking, type ChangedKey } from './sync/tracking'
 import type { Trip } from '@/modules/trip/types'
 import type { Accommodation } from '@/modules/accommodation/types'
 import type { Activity } from '@/modules/activity/types'
@@ -37,6 +39,10 @@ export class NixDb extends Dexie {
   websites!: Table<WebsiteSettings, string>
   expenses!: Table<Expense, string>
   places!: Table<MapPlace, string>
+  /** Lokale Änderungen, die noch zum Server müssen */
+  outbox!: Table<OutboxEntry, string>
+  /** Interne Einstellungen (z. B. Abgleich) */
+  meta!: Table<MetaEntry, string>
 
   constructor() {
     super('nix-wie-weg')
@@ -112,8 +118,51 @@ export class NixDb extends Dexie {
       places: 'id, tripId'
     })
 
-    // Nächste Änderung: this.version(13).stores({ … })
+    // v13: Geräte-Abgleich – Änderungsprotokoll und interne Einstellungen
+    this.version(13).stores({
+      outbox: 'key',
+      meta: 'key'
+    })
+
+    // Nächste Änderung: this.version(14).stores({ … })
+
+    // Jede lokale Änderung in Nutzertabellen für den Abgleich vormerken
+    this.use(changeTracking(DATA_TABLES, queueOutbox))
   }
+}
+
+/** Eintrag im Änderungsprotokoll: Datensatz `id` in Tabelle `tbl` wurde zuletzt um `at` geändert. */
+export interface OutboxEntry {
+  key: string
+  tbl: string
+  id: string
+  at: string
+}
+
+export interface MetaEntry {
+  key: string
+  value: unknown
+}
+
+export const outboxKey = (tbl: string, id: string) => `${tbl}\u0001${id}`
+
+const outboxListeners = new Set<() => void>()
+
+/** Wird nach jeder vorgemerkten lokalen Änderung aufgerufen (z. B. um bald abzugleichen). */
+export function onLocalChange(fn: () => void): () => void {
+  outboxListeners.add(fn)
+  return () => outboxListeners.delete(fn)
+}
+
+function queueOutbox(keys: ChangedKey[]): void {
+  const at = new Date().toISOString()
+  // Eigene Transaktion nach der ursprünglichen Änderung
+  setTimeout(() => {
+    db.outbox
+      .bulkPut(keys.map((k) => ({ key: outboxKey(k.tbl, k.id), tbl: k.tbl, id: k.id, at })))
+      .then(() => outboxListeners.forEach((fn) => fn()))
+      .catch((e) => console.error('[Abgleich] Änderung konnte nicht vorgemerkt werden', e))
+  }, 0)
 }
 
 export const db = new NixDb()

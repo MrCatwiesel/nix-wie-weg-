@@ -8,7 +8,7 @@ Reise-App von der Planung bis zur Reise-Webseite – offline zuerst, als install
 - **Vorbereiten:** Packliste (Vorlagen, pro Person), Reiseapotheke, Dokumente & Notfallnummern
 - **Unterwegs:** Tagesplaner mit Wetter und Öffnungszeiten, Karte, Ausgaben mit Ausgleich
 - **Erinnern & teilen:** Reisetagebuch mit Fotos, Reise-Webseite als eine HTML-Datei
-- **Zusammen reisen:** Reise als Datei mit Mitreisenden abgleichen (ohne Server)
+- **Zusammen reisen:** alle Geräte automatisch abgleichen über einen eigenen kleinen Server (`server/`), oder ohne Server per Datei
 
 **App online:** https://mrcatwiesel.github.io/nix-wie-weg-/
 
@@ -75,6 +75,7 @@ src/
     activity/      Modul "Unternehmungen"
   services/        weather.ts (Open-Meteo), geocoding.ts (Nominatim), openingHours.ts, images.ts
   config.ts        App-Einstellungen (Spendenlink, Repository)
+server/            Abgleich-Server (Node.js ohne Pakete, Docker, Anleitung in server/README.md)
 docs/
   ARCHITEKTUR.md   Regeln und Aufbau
   MODUL-VORLAGE.md So entsteht ein neues Modul
@@ -97,6 +98,11 @@ docs/
 | M4 Tagebuch | Einträge, Fotos, Highlights | erledigt |
 | M5 Webseite | 3 Vorlagen, Farbe/Schrift/Dunkel, Highlights, Export als eine HTML-Datei, Teilen | erledigt |
 | M6 Ausbau | Abgleich zwischen Geräten, Spenden-Bereich | erledigt (App-Store-Version optional, siehe unten) |
+
+## Geräte-Abgleich (eigener Server)
+
+Damit Handys, Tablet und PC automatisch dieselben Daten haben: Server nach [server/README.md](server/README.md) einrichten,
+dann in der App *Einstellungen → Geräte-Abgleich*.
 
 ## Spenden einrichten
 

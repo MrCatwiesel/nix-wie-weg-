@@ -39,7 +39,15 @@ Der Generator (`modules/website`) erzeugt **eine einzige HTML-Datei**: Bootstrap
 - `render.ts`: setzt das Dokument zusammen (Kopf, Farben, Schrift, Hell/Dunkel, Fotoansicht)
 - Alle Nutzertexte laufen durch `esc()`, Farben durch `safeColor()`.
 
-## Abgleich zwischen Geräten
+## Automatischer Abgleich (eigener Server)
+
+- **Server** (`server/server.mjs`): speichert pro Reisegruppe (Schlüssel) Datensätze `(tbl, id, stamp, deleted, data)` mit fortlaufender Nummer `seq`; Fotos als Dateien nach SHA-256. Neuere gewinnt (`stamp`).
+- **Änderungsprotokoll** (`core/sync/tracking.ts`): Dexie-Middleware merkt jede lokale Änderung in den Tabellen aus `core/tables.ts` in `outbox` vor – auch Löschungen. Module müssen dafür nichts tun.
+- **Ablauf** (`core/sync/engine.ts`): erst `outbox` hochladen (Fotos vorher einzeln), dann alle Änderungen seit `lastSeq` abholen und anwenden (`applyAction` in `core/sync/logic.ts`). Vom Server übernommene Änderungen werden nicht erneut vorgemerkt.
+- **Auslöser:** App-Start, wieder online, zurück in die App, 4 s nach einer Änderung, alle 5 Minuten.
+- **Regel für Module:** Jede Änderung setzt `updatedAt` (bzw. `createdAt` beim Anlegen) – sonst gilt sie nicht als neuer.
+
+## Abgleich per Datei (ohne Server)
 
 Ohne Server: `exportTrip()` (core/backup.ts) schreibt eine Reise mit allen zugehörigen Datensätzen (alle Tabellen mit `tripId`) in eine JSON-Datei. `importBackup()` führt zusammen: neue Datensätze werden ergänzt, vorhandene nur ersetzt, wenn `updatedAt` neuer ist (Logik in `core/merge.ts`). Löschungen werden nicht übertragen. Daher: **jeder Datensatz braucht `updatedAt`** (bzw. `createdAt`), und jede Änderung muss es setzen.
 
@@ -55,5 +63,6 @@ Ohne Server: `exportTrip()` (core/backup.ts) schreibt eine Reise mit allen zugeh
 | 2026-10-03 | Vue 3 + Bootstrap 5.3 | leicht lesbar, Bootstrap auch für Webseiten-Templates |
 | 2026-10-03 | Dexie/IndexedDB | große Datenmengen (Fotos) lokal, Live-Abfragen |
 | 2026-10-03 | Reise-Seite über `tripSection` erweiterbar | Reise-Modul muss neue Module nicht kennen |
+| 2026-10-04 | Eigener Abgleich-Server ohne Fremdpakete, Fotos in voller Größe | volle Datenhoheit, geringe Pflege; Wunsch des Nutzers |
 | 2026-10-04 | Abgleich per Datei, neuere Änderung gewinnt | kein Server, keine Konten, Datenschutz; einfach per AirDrop |
 | 2026-10-03 | Teilnehmer als Namensliste an der Reise (`participants`), Module speichern den Namen im Feld `person` | einfach, offline, ohne eigene Personen-Tabelle; `PersonSelect` aus `trip/public` für alle Formulare |
