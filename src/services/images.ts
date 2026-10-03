@@ -74,3 +74,30 @@ export async function processImage(file: Blob): Promise<ProcessedImage> {
     img.close()
   }
 }
+
+/**
+ * Verkleinert ein bereits gespeichertes Bild weiter (z. B. für die Webseite).
+ * Ist es schon klein genug, wird es unverändert zurückgegeben.
+ */
+export async function resizeBlob(blob: Blob, maxEdge: number, quality = 0.8): Promise<{ blob: Blob; width: number; height: number }> {
+  const img = await decode(blob)
+  try {
+    const size = fitWithin(img.width, img.height, maxEdge)
+    if (size.width === img.width && size.height === img.height && blob.type === 'image/jpeg') {
+      return { blob, width: img.width, height: img.height }
+    }
+    return { blob: await render(img.source, size.width, size.height, quality), ...size }
+  } finally {
+    img.close()
+  }
+}
+
+/** Blob → data:-URL (zum Einbetten in eine HTML-Datei). */
+export function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader()
+    r.onload = () => resolve(String(r.result))
+    r.onerror = () => reject(r.error)
+    r.readAsDataURL(blob)
+  })
+}

@@ -30,9 +30,14 @@ Kern  (db.ts · registry.ts · router.ts · backup.ts · composables.ts · dates
 - IDs sind UUIDs (`newId()`), damit später eine Synchronisation zwischen Geräten möglich ist.
 - Jeder Datensatz hat `createdAt` und `updatedAt`.
 
-## Reise-Webseite (M5, Ausblick)
+## Reise-Webseite (M5)
 
-Der Generator erzeugt eine **statische** Webseite (HTML + CSS + Bilder) aus ausgewählten Tagebuch-Einträgen. Templates sind Ordner mit Bootstrap-basiertem Layout und eigenen CSS-Variablen – ähnlich WordPress-Themes. Die Seite kann als ZIP exportiert oder auf GitHub Pages / Netlify veröffentlicht werden.
+Der Generator (`modules/website`) erzeugt **eine einzige HTML-Datei**: Bootstrap-CSS, Vorlagen-CSS, Texte und alle Fotos (als data:-URL, auf die gewählte Größe verkleinert) sind eingebettet, dazu ein kleines Skript für die Fotoansicht. Die Datei funktioniert ohne Internet und lässt sich teilen oder auf GitHub Pages hochladen.
+
+- `logic.ts`: Daten aufbereiten (`buildSiteData`), sicheres HTML (`esc`, `paragraphs`)
+- `templates/<name>.ts`: eine Vorlage = CSS + Funktion, die den `<body>` liefert; Registrierung in `templates/index.ts`, Beschreibung in `TEMPLATE_INFO`
+- `render.ts`: setzt das Dokument zusammen (Kopf, Farben, Schrift, Hell/Dunkel, Fotoansicht)
+- Alle Nutzertexte laufen durch `esc()`, Farben durch `safeColor()`.
 
 ## Entscheidungen
 

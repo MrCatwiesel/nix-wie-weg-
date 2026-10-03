@@ -52,9 +52,7 @@ const budgetCheck = computed(() => {
 })
 
 /** Platzhalter für die kommenden Module – zeigt die Roadmap direkt in der App. */
-const upcoming = [
-  { icon: 'globe2', title: 'Reise-Webseite', milestone: 'M5' }
-]
+const upcoming: { icon: string; title: string; milestone: string }[] = []
 
 async function remove() {
   if (!trip.value) return
@@ -136,7 +134,7 @@ async function remove() {
       <p class="mb-0" style="white-space: pre-line">{{ trip.notes }}</p>
     </div>
 
-    <h2 class="h6 text-body-secondary">Bald verfügbar</h2>
+    <h2 v-if="upcoming.length" class="h6 text-body-secondary">Bald verfügbar</h2>
     <div class="row g-2">
       <div v-for="m in upcoming" :key="m.title" class="col-6 col-md-3">
         <div class="border rounded p-3 h-100 text-body-secondary">

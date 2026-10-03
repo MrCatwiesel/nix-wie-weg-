@@ -8,6 +8,7 @@ import type { Medication, Vaccination } from '@/modules/meds/types'
 import type { EmergencyContact, TravelDocument } from '@/modules/documents/types'
 import type { WeatherCache } from '@/modules/dayplanner/types'
 import type { JournalEntry, Photo } from '@/modules/journal/types'
+import type { WebsiteSettings } from '@/modules/website/types'
 
 /**
  * Lokale Datenbank (IndexedDB) – die einzige Stelle, an der das Schema steht.
@@ -31,6 +32,7 @@ export class NixDb extends Dexie {
   weather!: Table<WeatherCache, string>
   journalEntries!: Table<JournalEntry, string>
   photos!: Table<Photo, string>
+  websites!: Table<WebsiteSettings, string>
 
   constructor() {
     super('nix-wie-weg')
@@ -91,7 +93,12 @@ export class NixDb extends Dexie {
       photos: 'id, tripId, entryId'
     })
 
-    // Nächste Änderung: this.version(10).stores({ … })
+    // v10: Reise-Webseite – Einstellungen je Reise
+    this.version(10).stores({
+      websites: 'tripId'
+    })
+
+    // Nächste Änderung: this.version(11).stores({ … })
   }
 }
 

@@ -109,7 +109,7 @@ async function persist() {
     <div class="card-body">
       <h2 class="h5">Über „Nix wie weg“</h2>
       <p class="small text-body-secondary mb-0">
-        Version {{ '0.9.0' }} · Freie Software, entwickelt in der Freizeit.
+        Version {{ '0.10.0' }} · Freie Software, entwickelt in der Freizeit.
         Wenn dir die App hilft, freuen wir uns über eine Spende.
       </p>
     </div>

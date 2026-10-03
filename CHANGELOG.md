@@ -1,5 +1,21 @@
 # Änderungsprotokoll
 
+## 0.10.0 – 2026-10-04
+
+### Neu
+- Modul „Reise-Webseite“ (M5):
+  - Drei Vorlagen: Klassisch (Titelbild, Tageskarten), Magazin (große Bilder, Reportage-Stil), Galerie (Fotoraster)
+  - Anpassbar: Akzentfarbe, Schrift (Modern, Serif, Rund), Hell/Dunkel, Titel, Untertitel, Einleitung, Autor
+  - Inhalt: nur Highlights oder alle Einträge, Stimmung und Orte ein-/ausblendbar, Bildgröße wählbar
+  - Live-Vorschau, Einstellungen werden automatisch gespeichert
+  - Export als eine einzige HTML-Datei mit allen Fotos (ohne Internet lesbar), Teilen über das iPad-Teilen-Menü, Herunterladen, Öffnen
+  - Fotoansicht auf der Webseite (antippen, wischen per Klick links/rechts, Esc)
+  - Anleitung zum Veröffentlichen auf GitHub Pages
+
+### Geändert
+- Datenbank-Version 10 (neue Tabelle `websites`), Backup enthält sie
+- Tagebuch hat eine öffentliche Schnittstelle (`journal/public.ts`)
+
 ## 0.9.0 – 2026-10-04
 
 ### Neu

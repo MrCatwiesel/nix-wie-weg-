@@ -12,6 +12,7 @@ export const BACKUP_TABLES = [
   'documents',
   'emergencyContacts',
   'journalEntries',
+  'websites',
   'photos'
 ] as const
 

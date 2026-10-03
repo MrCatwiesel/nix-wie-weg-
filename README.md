@@ -2,7 +2,7 @@
 
 Reise-App von der Planung bis zur Reise-Webseite – offline zuerst, als installierbare Web-App (PWA) für Handy, Tablet und PC.
 
-**Stand 0.9.0:** Planung komplett (M1: **Reiseprojekt**, **An- und Rückreise**, **Unterkünfte**, **Unternehmungen**, Budgetvergleich) und Vorbereitung komplett (M2: **Packliste**, **Reiseapotheke**, **Dokumente & Notfall**) – alles auch getrennt pro Teilnehmer. Unterwegs: **Tagesplaner** mit Wetter und Öffnungszeiten (M3). Erinnern: **Reisetagebuch mit Fotos** (M4).
+**Stand 0.10.0:** Planung komplett (M1: **Reiseprojekt**, **An- und Rückreise**, **Unterkünfte**, **Unternehmungen**, Budgetvergleich) und Vorbereitung komplett (M2: **Packliste**, **Reiseapotheke**, **Dokumente & Notfall**) – alles auch getrennt pro Teilnehmer. Unterwegs: **Tagesplaner** mit Wetter und Öffnungszeiten (M3). Erinnern: **Reisetagebuch mit Fotos** (M4). Teilen: **Reise-Webseite** mit 3 Vorlagen als einzelne HTML-Datei (M5).
 
 **App online:** https://mrcatwiesel.github.io/nix-wie-weg-/
 
@@ -63,6 +63,7 @@ src/
     documents/     Modul "Dokumente & Notfall"
     dayplanner/    Modul "Tagesplaner" (Wetter, Vorschläge, „Heute“)
     journal/       Modul "Reisetagebuch" (Einträge, Fotos, Highlights)
+    website/       Modul "Reise-Webseite" (templates/ = Design-Vorlagen, render.ts = HTML-Datei)
     activity/      Modul "Unternehmungen"
   services/        weather.ts (Open-Meteo), openingHours.ts (Öffnungszeiten-Parser), images.ts (Fotos verkleinern)
 docs/
@@ -85,7 +86,7 @@ docs/
 | M2 Vorbereitung | Packliste, Reiseapotheke, Dokumente & Notfall | erledigt |
 | M3 Unterwegs | Tagesplaner ✔ (Wetter, Öffnungszeiten), Karte offline | in Arbeit |
 | M4 Tagebuch | Tageseinträge ✔, Fotos ✔, Highlights ✔, Ausgaben | in Arbeit |
-| M5 Webseite | Templates, Highlights, statischer Export | offen |
+| M5 Webseite | 3 Vorlagen, Farbe/Schrift/Dunkel, Highlights, Export als eine HTML-Datei, Teilen | erledigt |
 | M6 Ausbau | Sync, Mitreisende, App Stores, Spenden-Dienste | offen |
 
 ## Lizenz
